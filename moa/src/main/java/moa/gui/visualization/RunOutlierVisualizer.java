@@ -97,7 +97,7 @@ public class RunOutlierVisualizer implements Runnable, ActionListener, ClusterEv
     private final ClusteringStream m_stream0;
     
     /* amount of relevant instances; older instances will be dropped;
-       creates the 'sliding window' over the stream; 
+       creates the 'sliding labeledInstancesBuffer' over the stream;
        is strongly connected to the decay rate and decay threshold*/
     private int m_stream0_decayHorizon;
 
@@ -135,7 +135,7 @@ public class RunOutlierVisualizer implements Runnable, ActionListener, ClusterEv
     /* reference to the visual panel */
     private OutlierVisualTab m_visualPanel;
     
-    /* points of window */
+    /* points of labeledInstancesBuffer */
     private LinkedList<DataPoint> pointBuffer0;
     
     //private boolean bRedrawPointImg = true;

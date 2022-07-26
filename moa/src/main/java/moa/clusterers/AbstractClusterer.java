@@ -136,21 +136,28 @@ public abstract class AbstractClusterer extends AbstractOptionHandler
 		resetLearningImpl();
 	}
 
+//	public void trainOnInstance(Instance inst) {
+//		if (inst.weight() > 0.0) {
+//			this.trainingWeightSeenByModel += inst.weight();
+//
+//			// update the attribute observer before training
+//			if (header == null) header = inst.getHeader();
+//			for (int i = 0; i < inst.numAttributes(); i++) {
+//				if (inst.attribute(i).isNominal()) {
+//					attributeObserver.updateAttributeStatistics(i, inst.attribute(i), (int)inst.value(i));
+//				}
+//				attributeObserver.increaseSize(1);
+//				if (attributeObserver.getDimension() == 0) attributeObserver.setDimension(inst.numAttributes());
+//			}
+//
+//			// train the clusterer
+//			trainOnInstanceImpl(inst);
+//		}
+//	}
+
 	public void trainOnInstance(Instance inst) {
 		if (inst.weight() > 0.0) {
 			this.trainingWeightSeenByModel += inst.weight();
-
-			// update the attribute observer before training
-			if (header == null) header = inst.getHeader();
-			for (int i = 0; i < inst.numAttributes(); i++) {
-				if (inst.attribute(i).isNominal()) {
-					attributeObserver.updateAttributeStatistics(i, inst.attribute(i), (int)inst.value(i));
-				}
-				attributeObserver.increaseSize(1);
-				if (attributeObserver.getDimension() == 0) attributeObserver.setDimension(inst.numAttributes());
-			}
-
-			// train the clusterer
 			trainOnInstanceImpl(inst);
 		}
 	}

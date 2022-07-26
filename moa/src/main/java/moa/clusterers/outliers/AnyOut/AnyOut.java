@@ -97,7 +97,7 @@ public class AnyOut extends MyBaseOutlierDetector {
 				totalOutliers += 1;
 			}
 			
-			// Update window objects.
+			// Update labeledInstancesBuffer objects.
 			if (objects.size() > windowSize) {
 				DataObject obj = objects.get(0);
 				objects.remove(0);
@@ -123,7 +123,7 @@ public class AnyOut extends MyBaseOutlierDetector {
 			// Learn object into ClusTree.
 			anyout.learnObject(o.getFeatures());
 
-			// Evaluation of the window objects.
+			// Evaluation of the labeledInstancesBuffer objects.
 			for (DataObject obj : objects){
 				int id = obj.getId();
 				if(anyout.isOutlier(id)) {

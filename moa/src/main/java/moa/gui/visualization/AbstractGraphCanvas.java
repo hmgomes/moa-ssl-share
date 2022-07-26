@@ -31,8 +31,8 @@ import moa.evaluation.MeasureCollection;
  *
  * The functionality of the scaling is as following: the size of the canvas is
  * determined by two sizes: the size itself and the preferredSize, which is used
- * by the parental viewport to set its size. If the window is rescaled (e.g. by
- * dragging the window) the preferred size does not change, which results in
+ * by the parental viewport to set its size. If the labeledInstancesBuffer is rescaled (e.g. by
+ * dragging the labeledInstancesBuffer) the preferred size does not change, which results in
  * setting the size to the viewport size. If the y axis is zoomed, the
  * baseHeight determines the new size and preferred size.
  *

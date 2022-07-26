@@ -24,7 +24,7 @@ import moa.classifiers.core.driftdetection.ADWIN;
 
 /**
  * Classification evaluator that updates evaluation results using an adaptive sliding
- * window.
+ * labeledInstancesBuffer.
  *
  * @author Albert Bifet (abifet at cs dot waikato dot ac dot nz)
  * @version $Revision: 7 $

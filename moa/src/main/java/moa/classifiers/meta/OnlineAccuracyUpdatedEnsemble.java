@@ -58,7 +58,7 @@ public class OnlineAccuracyUpdatedEnsemble extends AbstractClassifier implements
 	 * Chunk size.
 	 */
 	public FloatOption windowSizeOption = new FloatOption("windowSize", 'w',
-			"The window size used for classifier creation and evaluation.", 500, 1, Integer.MAX_VALUE);
+			"The labeledInstancesBuffer size used for classifier creation and evaluation.", 500, 1, Integer.MAX_VALUE);
 
 	/**
 	 * Determines the maximum size of model (evaluated after every chunk).
@@ -105,12 +105,12 @@ public class OnlineAccuracyUpdatedEnsemble extends AbstractClassifier implements
 	protected ClassifierWithMemory candidate;
 	
 	/**
-	 * Current window of instance class values.
+	 * Current labeledInstancesBuffer of instance class values.
 	 */
 	protected int[] currentWindow;
 	
 	/**
-	 * The mean square residual in a given moment, based on a window of latest examples.
+	 * The mean square residual in a given moment, based on a labeledInstancesBuffer of latest examples.
 	 */
 	protected double mse_r = 0;
 	
@@ -239,7 +239,7 @@ public class OnlineAccuracyUpdatedEnsemble extends AbstractClassifier implements
 		}	
     	
     	// Configure candidate classifier
-    	// The candidate classifier has been trained on the last window of examples
+    	// The candidate classifier has been trained on the last labeledInstancesBuffer of examples
     	this.candidate.birthday = this.processedInstances;
     	
     	if (this.ensemble.length < this.memberCountOption.getValue()) {

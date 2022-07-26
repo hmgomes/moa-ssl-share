@@ -94,7 +94,7 @@ public class EvaluatePrequentialDelayed extends ClassificationMainTask {
         1000, 0, Integer.MAX_VALUE);
     
     public FlagOption trainOnInitialWindowOption = new FlagOption("trainOnInitialWindow", 'm', 
-            "Whether to train or not using instances in the initial window.");
+            "Whether to train or not using instances in the initial labeledInstancesBuffer.");
     
     public FlagOption trainInBatches = new FlagOption("trainInBatches", 'b', 
         "If set training will not be interleaved with testing. ");

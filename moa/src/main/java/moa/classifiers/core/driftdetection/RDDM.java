@@ -159,12 +159,12 @@ public class RDDM extends AbstractChangeDetector {
             this.isChangeDetected = false;
         }
 
-        lastPos = (lastPos + 1) % minSizeStableConcept;   // Adds prediction at the end of the window.
+        lastPos = (lastPos + 1) % minSizeStableConcept;   // Adds prediction at the end of the labeledInstancesBuffer.
         storedPredictions[lastPos] = (byte) prediction;
-        if (numStoredInstances < minSizeStableConcept) {   // The window grows.
+        if (numStoredInstances < minSizeStableConcept) {   // The labeledInstancesBuffer grows.
             numStoredInstances++;
-        } else {   // The window is full.
-            firstPos = (firstPos + 1) % minSizeStableConcept;    // Start of the window moves.
+        } else {   // The labeledInstancesBuffer is full.
+            firstPos = (firstPos + 1) % minSizeStableConcept;    // Start of the labeledInstancesBuffer moves.
             if (lastWarnPos == lastPos) { 
                 lastWarnPos = -1;
             }

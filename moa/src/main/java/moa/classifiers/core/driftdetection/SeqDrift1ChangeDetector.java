@@ -80,17 +80,17 @@ public class SeqDrift1ChangeDetector extends AbstractChangeDetector {
     
 
 /**
- * SeqDrift1 uses sliding window to build a sequential change detection model
+ * SeqDrift1 uses sliding labeledInstancesBuffer to build a sequential change detection model
  * that uses statistically sound guarantees defined using Bernstein Bound on
  * false positive and false negative rates. This is a block based approach and
  * checks for changes in the data values only at block boundaries as opposed to
- * the methods on per instance basis. SeqDrift1 maintains a sliding window and
- * repository. Repository gathers the new instances and sliding window stores
+ * the methods on per instance basis. SeqDrift1 maintains a sliding labeledInstancesBuffer and
+ * repository. Repository gathers the new instances and sliding labeledInstancesBuffer stores
  * only the data values that are statistically not different, in other words
  * from the same distribution. If the data values in the repository are
- * consistent with the values in sliding window the data values of the
- * repository are copied to the sliding window applying reservoir algorithm. The
- * hypothesis is that the mean values of the sliding window and right repository
+ * consistent with the values in sliding labeledInstancesBuffer the data values of the
+ * repository are copied to the sliding labeledInstancesBuffer applying reservoir algorithm. The
+ * hypothesis is that the mean values of the sliding labeledInstancesBuffer and right repository
  * are not statistically different. In addition, SeqDrift1 declares a warning
  * state depending on warning significance level and increases sample size to
  * get a statistically more rigorous mean value
@@ -138,7 +138,7 @@ public class SeqDrift1 extends AbstractMOAObject {
         significanceLevel = _significanceLevel;
         blockSize = _blockSize;
         sampleSize = _blockSize;
-        slidingWindowBlockCount = (int) (1 / _significanceLevel); //Sliding window size is automaticall set as 1/delta
+        slidingWindowBlockCount = (int) (1 / _significanceLevel); //Sliding labeledInstancesBuffer size is automaticall set as 1/delta
         warningSignificanceLevel = _significanceWarningLevel;
 
         //Variables
@@ -186,7 +186,7 @@ public class SeqDrift1 extends AbstractMOAObject {
             } else if (iDriftType == WARNING) {
                 isWarning = true;
                 sampleSize = sampleSize * 2;
-                return false;//In warning state no instance is moved from sliding window to repository. Thus returning now               
+                return false;//In warning state no instance is moved from sliding labeledInstancesBuffer to repository. Thus returning now
             } /*
              else if(iDriftType == INTERNAL_DRIFT)
              {
@@ -201,7 +201,7 @@ public class SeqDrift1 extends AbstractMOAObject {
             else 
             {
                 isWarning = false;
-                moveValuesFromRightToLeft(); //All instances in sliding window should be moved to repository if no drift or if drift but not in warning             
+                moveValuesFromRightToLeft(); //All instances in sliding labeledInstancesBuffer should be moved to repository if no drift or if drift but not in warning
                 return false;
             }
         }
@@ -209,23 +209,23 @@ public class SeqDrift1 extends AbstractMOAObject {
     }
 
     /**
-     * Adding new instance to  sliding window
+     * Adding new instance to  sliding labeledInstancesBuffer
      * <p>
      * @param _inputValue A double instance
      * @return void
      */
     private void addToRightRepository(double _inputValue) {
-        if ((rightRepository.getSize() < sampleSize) || isWarning) //By default sliding window should have maximum of blockSize instances except in warning state
+        if ((rightRepository.getSize() < sampleSize) || isWarning) //By default sliding labeledInstancesBuffer should have maximum of blockSize instances except in warning state
         {
             rightRepository.add(new Double(_inputValue));
         } else {
-            System.out.println("request to add to sliding window sliding window size :" + rightRepository.getSize() + " Warning :" + isWarning);
+            System.out.println("request to add to sliding labeledInstancesBuffer sliding labeledInstancesBuffer size :" + rightRepository.getSize() + " Warning :" + isWarning);
         }
     }
 
     /**
-     * Removes excess instances in sliding window when the number of blocks is more than
-     * the sliding window size threshold
+     * Removes excess instances in sliding labeledInstancesBuffer when the number of blocks is more than
+     * the sliding labeledInstancesBuffer size threshold
      * <p>
      * @param void
      * @return void
@@ -239,13 +239,13 @@ public class SeqDrift1 extends AbstractMOAObject {
     }
 
     /**
-     * Moving the instances from  sliding window to  repository
+     * Moving the instances from  sliding labeledInstancesBuffer to  repository
      * <p>
      * @param void
      * @return void
      */
     private void moveValuesFromRightToLeft() {
-        for (int iIndex = 0; iIndex < rightRepository.getSize(); iIndex++) // Copy all instances from sliding window to repository
+        for (int iIndex = 0; iIndex < rightRepository.getSize(); iIndex++) // Copy all instances from sliding labeledInstancesBuffer to repository
         {
             if (((iIndex) % sampleSize) == 0) {
                 leftRepository.add(rightRepository.get(iIndex), true);
@@ -264,11 +264,11 @@ public class SeqDrift1 extends AbstractMOAObject {
                 --blockCount;
             }
         }
-        if (!isWarning) //If in warning do not remove the instances from  sliding window
+        if (!isWarning) //If in warning do not remove the instances from  sliding labeledInstancesBuffer
         {
             rightRepository.removeAll();
         } else {
-            System.out.println("ERROR: requested to move instances from  sliding window to  repository");
+            System.out.println("ERROR: requested to move instances from  sliding labeledInstancesBuffer to  repository");
             System.exit(2);
         }
     }
@@ -297,7 +297,7 @@ public class SeqDrift1 extends AbstractMOAObject {
     private int getDriftType() {
         if (getWidth() > blockSize) {
             leftRepositoryMean = getLeftRepositorySampleMean(); //Get the subsample mean from  repository
-            rightRepositoryMean = getRightRepositorySampleMean(); //Get the subsample mean from  sliding window
+            rightRepositoryMean = getRightRepositorySampleMean(); //Get the subsample mean from  sliding labeledInstancesBuffer
             epsilon = getEpsilon();
 
             double absValue = Math.abs(rightRepositoryMean - leftRepositoryMean);

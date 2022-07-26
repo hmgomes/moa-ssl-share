@@ -34,7 +34,7 @@ import com.yahoo.labs.samoa.instances.MultiLabelInstance;
 import com.yahoo.labs.samoa.instances.Prediction;
 
 /**
- * Multi-target regression evaluator that updates evaluation results using a sliding window.
+ * Multi-target regression evaluator that updates evaluation results using a sliding labeledInstancesBuffer.
  *
  * @author Albert Bifet (abifet at cs dot waikato dot ac dot nz)
  * @version $Revision: 7 $

@@ -14,8 +14,8 @@ import moa.core.Utils;
 import moa.options.ClassOption;
 import moa.tasks.TaskMonitor;
 
+import java.util.AbstractMap;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 
 /**
@@ -84,10 +84,10 @@ public class SelfTrainingClassifier extends AbstractClassifier implements SemiSu
     private List<Instance> L;
 
     /** Contains the predictions of one batch's training */
-    private List<Instance> Uhat;
+//    private List<Instance> Uhat;
 
     /** Contains the most confident prediction */
-    private List<Instance> mostConfident;
+//    private List<Instance> mostConfident;
 
     private int horizon;
     private int t;
@@ -96,6 +96,12 @@ public class SelfTrainingClassifier extends AbstractClassifier implements SemiSu
     private double SS;
     private double N;
     private double lastConfidenceScore;
+
+    // Statistics
+    protected long instancesSeen;
+    protected long instancesPseudoLabeled;
+    protected long instancesCorrectPseudoLabeled;
+
 
     @Override
     public String getPurposeString() { return "A self-training classifier"; }
@@ -122,44 +128,63 @@ public class SelfTrainingClassifier extends AbstractClassifier implements SemiSu
         this.learner.resetLearning();
         lastConfidenceScore = LS = SS = N = t = 0;
         allocateBatch();
+
+        this.instancesSeen = 0;
+        this.instancesCorrectPseudoLabeled = 0;
+        this.instancesPseudoLabeled = 0;
     }
 
     @Override
     public void trainOnInstanceImpl(Instance inst) {
-
-        /* SELF-TRAINING:
-         *
-         * B.add(X)
-         * if X is labeled:
-         *    learner.train(X)
-         * if B is full:
-         *    L <- labeledData(B)
-         *    U <- unlabeledData(B)
-         *    Uhat <- learner.predict(U)
-         *    U_best <- mostConfidentPrediction(Uhat, L)
-         *    B.clear()
-         *    B.add(U_best)
-         */
+        this.instancesSeen++;
         updateThreshold();
         t++;
 
-        if (inst.classIsMasked() || inst.classIsMissing()) {
-            U.add(inst);
-        } else {
-            L.add(inst);
-            learner.trainOnInstance(inst);
-        }
+        L.add(inst);
+        learner.trainOnInstance(inst);
+
 
         /* if batch B is full, launch the self-training process */
         if (isBatchFull()) {
-            predictOnBatch(U, Uhat);
-            // chose the method to estimate prediction uncertainty
-            if (confidenceOption.getChosenIndex() == 0) getMostConfidentDistanceBased(Uhat, mostConfident);
-            else getMostConfidentFromLearner(Uhat, mostConfident);
-            // train from the most confident examples
-            mostConfident.forEach(x -> learner.trainOnInstance(x));
-            cleanBatch();
+            trainOnUnlabeledBatch();
         }
+    }
+
+    private void trainOnUnlabeledBatch() {
+        List<AbstractMap.SimpleEntry<Instance, Double>> Uhat = predictOnBatch(U);
+        List<AbstractMap.SimpleEntry<Instance, Double>> mostConfident = null;
+
+        // chose the method to estimate prediction uncertainty
+        if (confidenceOption.getChosenIndex() == 0)
+            mostConfident = getMostConfidentDistanceBased(Uhat);
+        else
+            mostConfident = getMostConfidentFromLearner(Uhat);
+        // train from the most confident examples
+        for(AbstractMap.SimpleEntry<Instance, Double> x : mostConfident) {
+            learner.trainOnInstance(x.getKey());
+            if(x.getKey().classValue() == x.getValue())
+                ++this.instancesCorrectPseudoLabeled;
+            ++this.instancesPseudoLabeled;
+        }
+        cleanBatch();
+    }
+
+    @Override
+    public void addInitialWarmupTrainingInstances() {
+        // TODO: add counter, but this may not be necessary for this class
+    }
+
+    // TODO: Verify if we need to do something else.
+    @Override
+    public int trainOnUnlabeledInstance(Instance instance) {
+        this.instancesSeen++;
+        U.add(instance);
+
+        if (isBatchFull()) {
+            trainOnUnlabeledBatch();
+        }
+//        this.trainOnInstanceImpl(instance);
+        return -1;
     }
 
     private void updateThreshold() {
@@ -168,7 +193,7 @@ public class SelfTrainingClassifier extends AbstractClassifier implements SemiSu
     }
 
     /**
-     * Dynamically updates the confidence threshold at the end of each window horizon
+     * Dynamically updates the confidence threshold at the end of each labeledInstancesBuffer horizon
      */
     private void updateThresholdWindowing() {
         if (t % horizon == 0) {
@@ -196,36 +221,47 @@ public class SelfTrainingClassifier extends AbstractClassifier implements SemiSu
     /**
      * Gives prediction for each instance in a given batch.
      * @param batch the batch containing unlabeled instances
-     * @param result the result to save the prediction in
+     * @return result the result to save the prediction in
      */
-    private void predictOnBatch(List<Instance> batch, List<Instance> result) {
+    private List<AbstractMap.SimpleEntry<Instance, Double>> predictOnBatch(List<Instance> batch) {
+        List<AbstractMap.SimpleEntry<Instance, Double>> batchWithPredictions = new ArrayList<>();
+
+
         for (Instance instance : batch) {
             Instance copy = instance.copy(); // use copy because we do not want to modify the original data
+            double classValue = -1.0;
+            if(!instance.classIsMissing()) // if it is not missing, assume this is a debug execution and store it for checking pseudo-labelling accuracy.
+                classValue = instance.classValue();
+
             copy.setClassValue(Utils.maxIndex(learner.getVotesForInstance(copy)));
-            result.add(copy);
+            batchWithPredictions.add(new AbstractMap.SimpleEntry<Instance, Double> (copy, classValue));
         }
+
+        return batchWithPredictions;
     }
 
     /**
      * Gets the most confident predictions
      * @param batch batch of instances to give prediction to
-     * @param result instances that are more confidence than a threshold
+     * @return mostConfident instances that are more confidence than a threshold
      */
-    private void getMostConfidentFromLearner(List<Instance> batch, List<Instance> result) {
-        for (Instance instance : batch) {
-            double[] votes = learner.getVotesForInstance(instance);
+    private List<AbstractMap.SimpleEntry<Instance, Double>> getMostConfidentFromLearner(List<AbstractMap.SimpleEntry<Instance, Double>> batch) {
+        List<AbstractMap.SimpleEntry<Instance, Double>> mostConfident = new ArrayList<>();
+        for (AbstractMap.SimpleEntry<Instance, Double> x : batch) {
+            double[] votes = learner.getVotesForInstance(x.getKey());
             if (votes[Utils.maxIndex(votes)] >= threshold) {
-                result.add(instance);
+                mostConfident.add(x);
             }
         }
+        return mostConfident;
     }
 
     /**
      * Gets the most confident predictions that exceed the indicated threshold
      * @param batch the batch containing the predictions
-     * @param result the result containing the most confident prediction from the given batch
+     * @return mostConfident the result containing the most confident prediction from the given batch
      */
-    private void getMostConfidentDistanceBased(List<Instance> batch, List<Instance> result) {
+    private List<AbstractMap.SimpleEntry<Instance, Double>> getMostConfidentDistanceBased(List<AbstractMap.SimpleEntry<Instance, Double>> batch) {
         /*
          * Use distance measure to estimate the confidence of a prediction
          *
@@ -235,14 +271,16 @@ public class SelfTrainingClassifier extends AbstractClassifier implements SemiSu
          *          confidence[X] += distance(X, XL)
          *    confidence[X] = confidence[X] / |L| (taking the average)
          */
+        List<AbstractMap.SimpleEntry<Instance, Double>> mostConfident = new ArrayList<>();
+
         double[] confidences = new double[batch.size()];
         double conf;
         int i = 0;
-        for (Instance X : batch) {
+        for (AbstractMap.SimpleEntry<Instance, Double> X : batch) {
             conf = 0;
             for (Instance XL : this.L) {
-                if (XL.classValue() == X.classValue()) {
-                    conf += Clusterer.distance(XL.toDoubleArray(), X.toDoubleArray()) / this.L.size();
+                if (XL.classValue() == X.getKey().classValue()) {
+                    conf += Clusterer.distance(XL.toDoubleArray(), X.getKey().toDoubleArray()) / this.L.size();
                 }
             }
             conf = (1.0 / conf > 1.0 ? 1.0 : 1 / conf); // reverse so the distance becomes the confidence
@@ -260,9 +298,11 @@ public class SelfTrainingClassifier extends AbstractClassifier implements SemiSu
          * Here we simply retrieve the instances whose confidence score are below a threshold */
         for (int j = 0; j < confidences.length; j++) {
             if (confidences[j] >= threshold) {
-                result.add(batch.get(j));
+                mostConfident.add(batch.get(j));
             }
         }
+
+        return mostConfident;
     }
 
     /**
@@ -277,21 +317,25 @@ public class SelfTrainingClassifier extends AbstractClassifier implements SemiSu
     private void cleanBatch() {
         L.clear();
         U.clear();
-        Uhat.clear();
-        mostConfident.clear();
+//        mostConfident.clear();
     }
 
     /** Allocates memory to the batch */
     private void allocateBatch() {
         this.U = new ArrayList<>();
         this.L = new ArrayList<>();
-        this.Uhat = new ArrayList<>();
-        this.mostConfident = new ArrayList<>();
+//        this.mostConfident = new ArrayList<>();
     }
+
 
     @Override
     protected Measurement[] getModelMeasurementsImpl() {
-        return new Measurement[0];
+        // instances seen * the number of ensemble members
+        return new Measurement[]{
+                new Measurement("#pseudo-labeled", this.instancesPseudoLabeled),
+                new Measurement("#correct pseudo-labeled", this.instancesCorrectPseudoLabeled),
+                new Measurement("accuracy pseudo-labeled", this.instancesCorrectPseudoLabeled / (double) this.instancesPseudoLabeled * 100)
+        };
     }
 
     @Override

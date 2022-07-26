@@ -51,7 +51,7 @@ public class TaskLauncher extends JPanel {
 
 	private static void createAndShowGUI() {
 
-		// Create and set up the window.
+		// Create and set up the labeledInstancesBuffer.
 		JFrame frame = new JFrame("MOA Task Launcher");
 		frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 
@@ -60,7 +60,7 @@ public class TaskLauncher extends JPanel {
 		panel.setOpaque(true); // content panes must be opaque
 		frame.setContentPane(panel);
 
-		// Display the window.
+		// Display the labeledInstancesBuffer.
 		frame.pack();
 		frame.setSize(640, 480);
 		frame.setVisible(true);

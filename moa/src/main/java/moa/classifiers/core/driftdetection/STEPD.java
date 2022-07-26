@@ -86,19 +86,19 @@ public class STEPD extends AbstractChangeDetector {
             }
         }
 
-        if (nr == windowSize) {   // Recent window is full.
-            wo = wo + storedPredictions[firstPos];  // Oldest prediction in recent window 
-            no++;                                   // is moved to older window,
+        if (nr == windowSize) {   // Recent labeledInstancesBuffer is full.
+            wo = wo + storedPredictions[firstPos];  // Oldest prediction in recent labeledInstancesBuffer
+            no++;                                   // is moved to older labeledInstancesBuffer,
             wr = wr - storedPredictions[firstPos];
-            firstPos++;   // Start of recent window moves.
+            firstPos++;   // Start of recent labeledInstancesBuffer moves.
             if (firstPos == windowSize) {
             	firstPos = 0;
             }
-        } else {   // Recent window grows.
+        } else {   // Recent labeledInstancesBuffer grows.
             nr++;
         }
         
-        lastPos++;   // Adds prediction at the end of recent window.
+        lastPos++;   // Adds prediction at the end of recent labeledInstancesBuffer.
         if (lastPos == windowSize) {
             lastPos = 0;
         };

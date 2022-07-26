@@ -53,6 +53,11 @@ public class ClusterAndLabelClassifier extends AbstractClassifier
     /** Number of nearest clusters used to issue prediction */
     private int k;
 
+    // Statistics
+    protected long instancesSeen;
+    protected long instancesPseudoLabeled;
+    protected long instancesCorrectPseudoLabeled;
+
     @Override
     public String getPurposeString() {
         return "A basic semi-supervised learner";
@@ -104,15 +109,33 @@ public class ClusterAndLabelClassifier extends AbstractClassifier
 
     @Override
     public void resetLearningImpl() {
+
         this.clusterer.resetLearning();
+        this.instancesSeen = 0;
+        this.instancesCorrectPseudoLabeled = 0;
+        this.instancesPseudoLabeled = 0;
     }
 
     @Override
-    public void trainOnInstanceImpl(Instance inst) {
+    public void trainOnInstanceImpl(Instance instance) {
+        ++this.instancesSeen;
         Objects.requireNonNull(this.clusterer, "Clusterer must not be null!");
-        if (this.usePseudoLabel) this.trainOnInstanceWithPseudoLabel(inst);
-        else this.trainOnInstanceNoPseudoLabel(inst);
+        if (this.usePseudoLabel) this.trainOnInstanceWithPseudoLabel(instance);
+        else this.trainOnInstanceNoPseudoLabel(instance);
     }
+
+    @Override
+    public void addInitialWarmupTrainingInstances() {
+        // TODO: add counter, but this may not be necessary for this class
+    }
+
+    // TODO: Verify if we need to do something else.
+    @Override
+    public int trainOnUnlabeledInstance(Instance instance) {
+        this.trainOnInstanceImpl(instance);
+        return -1;
+    }
+
 
     /**
      * Trains Cluster-and-Label normally (use the instance to train the clusterer)
@@ -141,6 +164,11 @@ public class ClusterAndLabelClassifier extends AbstractClassifier
             }
             instPseudoLabel.setClassValue(pseudoLabel);
             this.clusterer.trainOnInstance(instPseudoLabel);
+
+            if(pseudoLabel == inst.maskedClassValue()) {
+                ++this.instancesCorrectPseudoLabeled;
+            }
+            ++this.instancesPseudoLabeled;
         } else {
             this.clusterer.trainOnInstance(inst); // else, just train it normally
         }
@@ -192,7 +220,12 @@ public class ClusterAndLabelClassifier extends AbstractClassifier
 
     @Override
     protected Measurement[] getModelMeasurementsImpl() {
-        return new Measurement[0];
+        // instances seen * the number of ensemble members
+        return new Measurement[]{
+                new Measurement("#pseudo-labeled", -1), // this.instancesPseudoLabeled),
+                new Measurement("#correct pseudo-labeled", -1), //this.instancesCorrectPseudoLabeled),
+                new Measurement("accuracy pseudo-labeled", -1) //this.instancesCorrectPseudoLabeled / (double) this.instancesPseudoLabeled * 100)
+        };
     }
 
     @Override

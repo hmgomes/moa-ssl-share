@@ -77,6 +77,11 @@ public class SelfTrainingIncrementalClassifier extends AbstractClassifier implem
     private double N;
     private double lastConfidenceScore;
 
+    // Statistics
+    protected long instancesSeen;
+    protected long instancesPseudoLabeled;
+    protected long instancesCorrectPseudoLabeled;
+
     @Override
     public void prepareForUseImpl(TaskMonitor monitor, ObjectRepository repository) {
         this.learner = (Classifier) getPreparedClassOption(learnerOption);
@@ -99,6 +104,9 @@ public class SelfTrainingIncrementalClassifier extends AbstractClassifier implem
     @Override
     public void resetLearningImpl() {
         LS = SS = N = lastConfidenceScore = 0;
+        this.instancesSeen = 0;
+        this.instancesCorrectPseudoLabeled = 0;
+        this.instancesPseudoLabeled = 0;
     }
 
     @Override
@@ -116,14 +124,16 @@ public class SelfTrainingIncrementalClassifier extends AbstractClassifier implem
 
         updateThreshold();
 
+        ++this.instancesSeen;
+
         if (!inst.classIsMasked() && !inst.classIsMissing()) {
             learner.trainOnInstance(inst);
         } else {
-            double prediction = getPrediction(inst);
-            double confidenceScore = learner.getConfidenceForPrediction(inst, prediction);
+            double pseudoLabel = getPrediction(inst);
+            double confidenceScore = learner.getConfidenceForPrediction(inst, pseudoLabel);
             if (confidenceScore >= threshold) {
                 Instance instCopy = inst.copy();
-                instCopy.setClassValue(prediction);
+                instCopy.setClassValue(pseudoLabel);
                 learner.trainOnInstance(instCopy);
             }
             // accumulate the statistics to update the adaptive threshold
@@ -131,6 +141,11 @@ public class SelfTrainingIncrementalClassifier extends AbstractClassifier implem
             SS += confidenceScore * confidenceScore;
             N++;
             lastConfidenceScore = confidenceScore;
+
+            if(pseudoLabel == inst.maskedClassValue()) {
+                ++this.instancesCorrectPseudoLabeled;
+            }
+            ++this.instancesPseudoLabeled;
         }
 
         t++;
@@ -141,8 +156,20 @@ public class SelfTrainingIncrementalClassifier extends AbstractClassifier implem
         if (thresholdChoiceOption.getChosenIndex() == 2) updateThresholdVariance();
     }
 
+    @Override
+    public void addInitialWarmupTrainingInstances() {
+        // TODO: add counter, but this may not be necessary for this class
+    }
+
+    // TODO: Verify if we need to do something else.
+    @Override
+    public int trainOnUnlabeledInstance(Instance instance) {
+        this.trainOnInstanceImpl(instance);
+        return -1;
+    }
+
     /**
-     * Updates the threshold after each window horizon
+     * Updates the threshold after each labeledInstancesBuffer horizon
      */
     private void updateThresholdWindowing() {
         if (t % horizon == 0) {
@@ -181,7 +208,12 @@ public class SelfTrainingIncrementalClassifier extends AbstractClassifier implem
 
     @Override
     protected Measurement[] getModelMeasurementsImpl() {
-        return new Measurement[0];
+        // instances seen * the number of ensemble members
+        return new Measurement[]{
+                new Measurement("#pseudo-labeled", -1), // this.instancesPseudoLabeled),
+                new Measurement("#correct pseudo-labeled", -1), //this.instancesCorrectPseudoLabeled),
+                new Measurement("accuracy pseudo-labeled", -1) //this.instancesCorrectPseudoLabeled / (double) this.instancesPseudoLabeled * 100)
+        };
     }
 
     @Override

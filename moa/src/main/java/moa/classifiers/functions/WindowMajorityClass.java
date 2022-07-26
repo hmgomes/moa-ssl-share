@@ -10,8 +10,8 @@ import moa.core.ObjectRepository;
 import moa.tasks.TaskMonitor;
 
 /**
- * Majority class learner using window time.
- * It always returns the majority class from the last captured window
+ * Majority class learner using labeledInstancesBuffer time.
+ * It always returns the majority class from the last captured labeledInstancesBuffer
  */
 public class WindowMajorityClass extends AbstractClassifier implements MultiClassClassifier {
 
@@ -23,15 +23,15 @@ public class WindowMajorityClass extends AbstractClassifier implements MultiClas
     }
 
     public IntOption windowSizeOption = new IntOption("windowSize", 'w',
-            "The size of the window to observe the classes", 1000);
+            "The size of the labeledInstancesBuffer to observe the classes", 1000);
 
     /** Keeps track of the class count */
     private DoubleVector observedClasses;
 
-    /** The window size */
+    /** The labeledInstancesBuffer size */
     private int windowSize;
 
-    /** The pointer that checks whether the window is full*/
+    /** The pointer that checks whether the labeledInstancesBuffer is full*/
     private int pointer;
 
     @Override

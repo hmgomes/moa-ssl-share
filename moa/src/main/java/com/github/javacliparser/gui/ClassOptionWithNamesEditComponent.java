@@ -1,7 +1,7 @@
 /**
  * [ClassOptionWithNamesEditComponent.java]
  * 
- * ClassOptionWithNames: Editing window
+ * ClassOptionWithNames: Editing labeledInstancesBuffer
  * 
  * @author Yunsu Kim
  * 		   based on the implementation of Richard Kirkby

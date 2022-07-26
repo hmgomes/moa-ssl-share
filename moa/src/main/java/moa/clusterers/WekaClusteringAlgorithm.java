@@ -43,7 +43,7 @@ public class WekaClusteringAlgorithm extends AbstractClusterer {
     private static final long serialVersionUID = 1L;
     
     public IntOption horizonOption = new IntOption("horizon",
-            'h', "Range of the window.", 1000);
+            'h', "Range of the labeledInstancesBuffer.", 1000);
     
     public MultiChoiceOption wekaAlgorithmOption;
     

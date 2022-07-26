@@ -33,7 +33,7 @@ import com.yahoo.labs.samoa.instances.InstanceData;
 import com.yahoo.labs.samoa.instances.Prediction;
 
 /**
- * Regression evaluator that updates evaluation results using a sliding window.
+ * Regression evaluator that updates evaluation results using a sliding labeledInstancesBuffer.
  *
  * @author Albert Bifet (abifet at cs dot waikato dot ac dot nz)
  * @version $Revision: 7 $

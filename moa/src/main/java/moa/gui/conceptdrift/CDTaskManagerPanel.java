@@ -494,7 +494,7 @@ public class CDTaskManagerPanel extends JPanel {
 
     private static void createAndShowGUI() {
 
-        // Create and set up the window.
+        // Create and set up the labeledInstancesBuffer.
         JFrame frame = new JFrame("Test");
         frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 
@@ -503,7 +503,7 @@ public class CDTaskManagerPanel extends JPanel {
         panel.setOpaque(true); // content panes must be opaque
         frame.setContentPane(panel);
 
-        // Display the window.
+        // Display the labeledInstancesBuffer.
         frame.pack();
         // frame.setSize(400, 400);
         frame.setVisible(true);

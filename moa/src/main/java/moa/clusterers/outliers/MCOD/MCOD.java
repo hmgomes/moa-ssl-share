@@ -63,7 +63,7 @@ public class MCOD extends MCODBase {
         //bWarning = true;
         
         objId = FIRST_OBJ_ID; // init object identifier
-        // create nodes list of window
+        // create nodes list of labeledInstancesBuffer
         windowNodes = new Vector<ISBNode>();
         // create ISB
         ISB_PD = new ISBIndex(m_radius, m_k);
@@ -92,7 +92,7 @@ public class MCOD extends MCODBase {
     void AddNeighbor(ISBNode node, ISBNode q, boolean bUpdateState) {
         if (bTrace) Println("AddNeighbor: node.id: " + node.id + ", q.id: " + q.id);
         
-        // check if q still in window
+        // check if q still in labeledInstancesBuffer
         if (IsNodeIdInWin(q.id) == false) {
             if (bWarning) Println("AddNeighbor: node.id: " + node.id + ", q.id: " + q.id + " (expired)"); 
             return;
@@ -310,7 +310,7 @@ public class MCOD extends MCODBase {
             e = eventQueue.ExtractMin();
             ISBNode x = e.node;
             if (bTrace) Println("Process event queue: check node x: " + x.id);
-            // node x must be in window and not in any micro-cluster
+            // node x must be in labeledInstancesBuffer and not in any micro-cluster
             boolean bValid = ( IsNodeIdInWin(x.id) && (x.mc == null) );
             if (bValid) {
                 // remove nodeExpired from x.nn_before
@@ -389,9 +389,9 @@ public class MCOD extends MCODBase {
         ISBNode nodeNew = new ISBNode(inst, obj, objId);
         if (bTrace) { Print("New node: "); PrintNode(nodeNew); }
         
-        objId++; // update object identifier (slide window)
+        objId++; // update object identifier (slide labeledInstancesBuffer)
         
-        AddNode(nodeNew); // add nodeNew to window
+        AddNode(nodeNew); // add nodeNew to labeledInstancesBuffer
         if (bTrace) PrintWindow();
         
         ProcessNewNode(nodeNew, true);

@@ -53,7 +53,7 @@ public class Dstream extends AbstractClusterer {
             + "threshold for sparse grids, in (0,1)", 0.8, 0.001, 0.999);
 
     public FloatOption betaOption = new FloatOption("Beta", 'b', "Adjusts the "
-            + "window of protection for renaming previously deleted grids as "
+            + "labeledInstancesBuffer of protection for renaming previously deleted grids as "
             + "sporadic, > 0", 0.3, 0.001, Double.MAX_VALUE);
 
     /**
@@ -82,7 +82,7 @@ public class Dstream extends AbstractClusterer {
     private double cl;
 
     /**
-     * User defined parameter: Adjusts the window of protection for renaming
+     * User defined parameter: Adjusts the labeledInstancesBuffer of protection for renaming
      * previously deleted grids as being sporadic
      */
     private double beta;

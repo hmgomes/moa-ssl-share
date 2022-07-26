@@ -76,6 +76,11 @@ public class ClusterAndLabelSubLearnerClassifier extends AbstractClassifier impl
     /** Which prediction to do */
     private int predictionChoice;
 
+    // Statistics
+    protected long instancesSeen;
+    protected long instancesPseudoLabeled;
+    protected long instancesCorrectPseudoLabeled;
+
     @Override
     public void prepareForUseImpl(TaskMonitor monitor, ObjectRepository repository) {
         this.clusterer = (AbstractClusterer) getPreparedClassOption(this.clustererOption);
@@ -191,16 +196,32 @@ public class ClusterAndLabelSubLearnerClassifier extends AbstractClassifier impl
     @Override
     public void resetLearningImpl() {
         this.globalLearner.resetLearning();
+        this.instancesSeen = 0;
+        this.instancesCorrectPseudoLabeled = 0;
+        this.instancesPseudoLabeled = 0;
     }
 
     @Override
     public void trainOnInstanceImpl(Instance inst) {
+        ++this.instancesSeen;
         // update the clusters
         if (this.usePseudoLabel) this.trainOnInstanceWithPseudoLabel(inst);
         else this.trainOnInstanceNoPseudoLabel(inst);
 
         // train the global learner on this instance
         this.globalLearner.trainOnInstance(inst);
+    }
+
+    @Override
+    public void addInitialWarmupTrainingInstances() {
+        // TODO: add counter, but this may not be necessary for this class
+    }
+
+    // TODO: Verify if we need to do something else.
+    @Override
+    public int trainOnUnlabeledInstance(Instance instance) {
+        this.trainOnInstanceImpl(instance);
+        return -1;
     }
 
     /**
@@ -225,6 +246,10 @@ public class ClusterAndLabelSubLearnerClassifier extends AbstractClassifier impl
             instPseudoLabel.setClassValue(pseudoLabel);
             this.clusterer.trainOnInstance(instPseudoLabel);
             trainLearnerInCluster(instPseudoLabel, this.clusterer.getUpdatedCluster());
+            if(pseudoLabel == inst.maskedClassValue()) {
+                ++this.instancesCorrectPseudoLabeled;
+            }
+            ++this.instancesPseudoLabeled;
         } else {
             this.clusterer.trainOnInstance(inst); // else, just train it normally
             trainLearnerInCluster(inst, this.clusterer.getUpdatedCluster());
@@ -245,8 +270,14 @@ public class ClusterAndLabelSubLearnerClassifier extends AbstractClassifier impl
 
     @Override
     protected Measurement[] getModelMeasurementsImpl() {
-        return new Measurement[0];
+        // instances seen * the number of ensemble members
+        return new Measurement[]{
+                new Measurement("#pseudo-labeled", -1), // this.instancesPseudoLabeled),
+                new Measurement("#correct pseudo-labeled", -1), //this.instancesCorrectPseudoLabeled),
+                new Measurement("accuracy pseudo-labeled", -1) //this.instancesCorrectPseudoLabeled / (double) this.instancesPseudoLabeled * 100)
+        };
     }
+
 
     @Override
     public void getModelDescription(StringBuilder out, int indent) { }

@@ -37,15 +37,15 @@ import com.github.javacliparser.IntOption;
  * <p>ADWIN is a change detector and estimator that solves in
  * a well-speciﬁed way the problem of tracking the average of
  * a stream of bits or real-valued numbers. ADWIN keeps a
- * variable-length window of recently seen items, with the property
- * that the window has the maximal length statistically consistent
+ * variable-length labeledInstancesBuffer of recently seen items, with the property
+ * that the labeledInstancesBuffer has the maximal length statistically consistent
  * with the hypothesis “there has been no change in the average value
- * inside the window”.<br />
- * More precisely, an older fragment of the window is dropped if and only
+ * inside the labeledInstancesBuffer”.<br />
+ * More precisely, an older fragment of the labeledInstancesBuffer is dropped if and only
  * if there is enough evidence that its average value differs from that of
- * the rest of the window. This has two consequences: one, that change
- * reliably declared whenever the window shrinks; and two, that at any time
- * the average over the existing window can be reliably taken as an estimation
+ * the rest of the labeledInstancesBuffer. This has two consequences: one, that change
+ * reliably declared whenever the labeledInstancesBuffer shrinks; and two, that at any time
+ * the average over the existing labeledInstancesBuffer can be reliably taken as an estimation
  * of the current average in the stream (barring a very small or very recent
  * change that is still not statistically visible). A formal and quantitative
  * statement of these two points (a theorem) appears in<p>
@@ -57,9 +57,9 @@ import com.github.javacliparser.IntOption;
  * detects and adapts to the current rate of change. Its only parameter is a
  * conﬁdence bound δ, indicating how conﬁdent we want to be in the algorithm’s
  * output, inherent to all algorithms dealing with random processes. Also
- * important, ADWIN does not maintain the window explicitly, but compresses it
+ * important, ADWIN does not maintain the labeledInstancesBuffer explicitly, but compresses it
  * using a variant of the exponential histogram technique. This means that it
- * keeps a window of length W using only O(log W) memory and O(log W) processing
+ * keeps a labeledInstancesBuffer of length W using only O(log W) memory and O(log W) processing
  * time per item.<br />
  * ADWIN Bagging is the online bagging method of Oza and Rusell with the
  * addition of the ADWIN algorithm as a change detector and as an estimator for

@@ -35,7 +35,7 @@ import moa.tasks.TaskMonitor;
 
 /**
  * Classification evaluator that updates evaluation results using a sliding
- * window. Performance measures designed for class imbalance problems.
+ * labeledInstancesBuffer. Performance measures designed for class imbalance problems.
  * Only to be used for binary classification problems with unweighted instances.
  * Class 0 - majority/negative examples, class 1 - minority, positive examples.
  * Prequential AUC calculation as described and analyzed in: D. Brzezinski,
@@ -83,7 +83,7 @@ public class WindowAUCImbalancedPerformanceEvaluator extends
 			protected double value;
 
 			/**
-			 * Age of example - position in the window where the example was
+			 * Age of example - position in the labeledInstancesBuffer where the example was
 			 * added
 			 */
 			protected int posWindow;
@@ -99,7 +99,7 @@ public class WindowAUCImbalancedPerformanceEvaluator extends
 			 * @param value
 			 *            score value
 			 * @param position
-			 *            score position in window (defines its age)
+			 *            score position in labeledInstancesBuffer (defines its age)
 			 * @param isPositive
 			 *            true if the example's true label is positive
 			 */
@@ -205,7 +205,7 @@ public class WindowAUCImbalancedPerformanceEvaluator extends
 				this.holdoutNumNeg = this.numNeg;
 			}
 			
-			// // if the window is used and it's full			
+			// // if the labeledInstancesBuffer is used and it's full
 			if (size > 0 && posWindow >= this.size) {
 				// // remove the oldest example
 				sortedScores.remove(window[posWindow % size]);

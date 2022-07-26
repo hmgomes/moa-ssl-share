@@ -80,7 +80,7 @@ public class GUI extends JPanel {
                 @Override
                 public void run() {
 
-                    // Create and set up the window.
+                    // Create and set up the labeledInstancesBuffer.
                     JFrame frame = new JFrame("MOA Graphical User Interface");
                     frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
                     
@@ -98,7 +98,7 @@ public class GUI extends JPanel {
                     frame.getContentPane().setLayout(new BorderLayout());
                     frame.getContentPane().add(gui);
 
-                    // Display the window.
+                    // Display the labeledInstancesBuffer.
                     frame.setSize(GUIDefaults.getFrameWidth(), GUIDefaults.getFrameHeight());
                     frame.setVisible(true);
                 }

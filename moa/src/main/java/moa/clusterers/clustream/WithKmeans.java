@@ -44,7 +44,7 @@ public class WithKmeans extends AbstractClusterer {
     private static final long serialVersionUID = 1L;
 
     public IntOption timeWindowOption = new IntOption("horizon",
-            'h', "Rang of the window.", 1000);
+            'h', "Rang of the labeledInstancesBuffer.", 1000);
 
     public IntOption maxNumKernelsOption = new IntOption(
             "maxNumKernels", 'm',

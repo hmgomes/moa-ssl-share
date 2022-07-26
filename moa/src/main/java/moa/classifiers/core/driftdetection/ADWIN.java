@@ -23,10 +23,10 @@ import moa.AbstractMOAObject;
 
 /**
  * ADaptive sliding WINdow method. This method is a change detector and estimator.
- * It keeps a variable-length window of recently seen
- * items, with the property that the window has the maximal length statistically
+ * It keeps a variable-length labeledInstancesBuffer of recently seen
+ * items, with the property that the labeledInstancesBuffer has the maximal length statistically
  * consistent with the hypothesis "there has been no change in the average value
- * inside the window".
+ * inside the labeledInstancesBuffer".
  *
  *
  * @author Albert Bifet (abifet at cs dot waikato dot ac dot nz)
@@ -478,10 +478,10 @@ public class ADWIN extends AbstractMOAObject {
         ListItem cursor;
         mintTime++;
 
-        //1,2)Increment window in one element
+        //1,2)Increment labeledInstancesBuffer in one element
         insertElement(intEntrada);
         blnBucketDeleted = false;
-        //3)Reduce  window
+        //3)Reduce  labeledInstancesBuffer
         if (mintTime % mintClock == 0 && getWidth() > mintMinimLongitudWindow) {
             boolean blnReduceWidth = true; // Diference
 
@@ -537,7 +537,7 @@ public class ADWIN extends AbstractMOAObject {
                             }
                             blnReduceWidth = true; // Diference
                             blnChange = true;
-                            if (getWidth() > 0) { //Reduce width of the window
+                            if (getWidth() > 0) { //Reduce width of the labeledInstancesBuffer
                                 //while (n0>0)  // Diference NEGATIVE
                                 n0 -= deleteElement();
                                 blnExit = true;

@@ -236,7 +236,7 @@ public class ExactSTORM extends STORMBase {
         if (bTrace) Println("Insert new node to ISB.");
         ISB.Insert(nodeNew);
         
-        // insert node at window
+        // insert node at labeledInstancesBuffer
         windowNodes.add(nodeNew);
         if (bTrace) PrintWindow();
         
@@ -252,7 +252,7 @@ public class ExactSTORM extends STORMBase {
     void SearchOutliers() {
         if (bTrace) Println("Invoke query: ");
         ISBNodeExact node;
-        // process each node in the ISB (also in window)
+        // process each node in the ISB (also in labeledInstancesBuffer)
         for (int i = 0; i < windowNodes.size(); i++) {
             node = (ISBNodeExact) windowNodes.get(i);
             if (bTrace) {

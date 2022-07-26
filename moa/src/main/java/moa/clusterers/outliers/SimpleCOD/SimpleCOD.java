@@ -59,7 +59,7 @@ public class SimpleCOD extends SimpleCODBase {
         //bWarning = true;
         
         objId = FIRST_OBJ_ID; // init object identifier
-        // create nodes list of window
+        // create nodes list of labeledInstancesBuffer
         windowNodes = new Vector<ISBNode>();
         // create ISB
         ISB = new ISBIndex(m_radius, m_k);
@@ -138,7 +138,7 @@ public class SimpleCOD extends SimpleCODBase {
             e = eventQueue.ExtractMin();
             ISBNode x = e.node;
             if (bTrace) Println("Process event queue: check node x: " + x.id);
-            // node x must be in window
+            // node x must be in labeledInstancesBuffer
             if (IsNodeIdInWin(x.id)) {
                 // remove nodeExpired from x.nn_before
                 x.RemovePrecNeigh(nodeExpired);
@@ -187,9 +187,9 @@ public class SimpleCOD extends SimpleCODBase {
         ISBNode nodeNew = new ISBNode(inst, obj, objId);
         if (bTrace) { Print("New node: "); PrintNode(nodeNew); }
         
-        objId++; // update object identifier (slide window)
+        objId++; // update object identifier (slide labeledInstancesBuffer)
         
-        AddNode(nodeNew); // add nodeNew to window
+        AddNode(nodeNew); // add nodeNew to labeledInstancesBuffer
         if (bTrace) PrintWindow();
         
         // insert new node to ISB index

@@ -35,6 +35,11 @@ public class SelfTrainingWeightingClassifier extends AbstractClassifier implemen
     /** The learner to be self-trained */
     private Classifier learner;
 
+    // Statistics
+    protected long instancesSeen;
+    protected long instancesPseudoLabeled;
+    protected long instancesCorrectPseudoLabeled;
+
     @Override
     public void prepareForUseImpl(TaskMonitor monitor, ObjectRepository repository) {
         this.learner = (Classifier) getPreparedClassOption(learnerOption);
@@ -50,25 +55,54 @@ public class SelfTrainingWeightingClassifier extends AbstractClassifier implemen
     @Override
     public void resetLearningImpl() {
         this.learner.resetLearning();
+        this.instancesSeen = 0;
+        this.instancesCorrectPseudoLabeled = 0;
+        this.instancesPseudoLabeled = 0;
     }
 
     @Override
     public void trainOnInstanceImpl(Instance inst) {
+        ++this.instancesSeen;
+
         if (!inst.classIsMasked() && !inst.classIsMissing()) {
             learner.trainOnInstance(inst);
         } else {
             Instance instCopy = inst.copy();
-            int yHat = Utils.maxIndex(learner.getVotesForInstance(instCopy));
-            instCopy.setClassValue(yHat);
-            if (!equalWeight) instCopy.setWeight(learner.getConfidenceForPrediction(instCopy, yHat));
+            int pseudoLabel = Utils.maxIndex(learner.getVotesForInstance(instCopy));
+            instCopy.setClassValue(pseudoLabel);
+            if (!equalWeight) instCopy.setWeight(learner.getConfidenceForPrediction(instCopy, pseudoLabel));
             learner.trainOnInstance(instCopy);
+
+            if(pseudoLabel == inst.maskedClassValue()) {
+                ++this.instancesCorrectPseudoLabeled;
+            }
+            ++this.instancesPseudoLabeled;
         }
     }
 
     @Override
-    protected Measurement[] getModelMeasurementsImpl() {
-        return new Measurement[0];
+    public void addInitialWarmupTrainingInstances() {
+        // TODO: add counter, but this may not be necessary for this class
     }
+
+    // TODO: Verify if we need to do something else.
+    @Override
+    public int trainOnUnlabeledInstance(Instance instance) {
+        this.trainOnInstanceImpl(instance);
+        return -1;
+    }
+
+    @Override
+    protected Measurement[] getModelMeasurementsImpl() {
+        // instances seen * the number of ensemble members
+        return new Measurement[]{
+                new Measurement("#pseudo-labeled", -1), // this.instancesPseudoLabeled),
+                new Measurement("#correct pseudo-labeled", -1), //this.instancesCorrectPseudoLabeled),
+                new Measurement("accuracy pseudo-labeled", -1) //this.instancesCorrectPseudoLabeled / (double) this.instancesPseudoLabeled * 100)
+        };
+    }
+
+
 
     @Override
     public void getModelDescription(StringBuilder out, int indent) {}

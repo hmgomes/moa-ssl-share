@@ -43,7 +43,7 @@ public class WithDBSCAN extends AbstractClusterer {
 	private static final long serialVersionUID = 1L;
 	
 	public IntOption horizonOption = new IntOption("horizon", 'h',
-			"Range of the window.", 1000);
+			"Range of the labeledInstancesBuffer.", 1000);
 
 	public FloatOption epsilonOption = new FloatOption("epsilon", 'e',
 			"Defines the epsilon neighbourhood", 0.02, 0, 1);

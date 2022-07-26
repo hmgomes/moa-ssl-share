@@ -26,6 +26,7 @@ import java.io.PrintStream;
 
 import moa.classifiers.Classifier;
 import moa.classifiers.MultiClassClassifier;
+import moa.classifiers.trees.HoeffdingTree;
 import moa.core.Example;
 import moa.core.Measurement;
 import moa.core.ObjectRepository;
@@ -202,6 +203,14 @@ public class EvaluatePrequential extends ClassificationMainTask {
                 outputPredictionResultStream.println(Utils.maxIndex(prediction) + "," + (
                  ((Instance) testInst.getData()).classIsMissing() == true ? " ? " : trueClass));
             }
+
+
+            HoeffdingTree ht = new HoeffdingTree();
+            ht.setModelContext(stream.getHeader());
+            ht.resetLearning();
+//            ht.trainOnInstance(trainInst);
+            HoeffdingTree ht2 = (HoeffdingTree) learner;
+            ht2.trainOnInstance(trainInst);
 
             //evaluator.addClassificationAttempt(trueClass, prediction, testInst.weight());
             evaluator.addResult(testInst, prediction);

@@ -180,6 +180,15 @@ public class DoubleVector extends AbstractMOAObject {
         this.array = newArray;
     }
 
+    public boolean isValueRepeated(int idxValue) {
+        for(int i = 0; i < this.array.length ; ++i) {
+            if(idxValue != i)
+                if(this.array[idxValue] == this.array[i])
+                    return true;
+        }
+        return false;
+    }
+
     public void getSingleLineDescription(StringBuilder out) {
         getSingleLineDescription(out, numValues());
     }

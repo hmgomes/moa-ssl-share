@@ -1,6 +1,7 @@
 package moa.streams;
 
 import com.github.javacliparser.FloatOption;
+import com.github.javacliparser.IntOption;
 import com.yahoo.labs.samoa.instances.Instance;
 import com.yahoo.labs.samoa.instances.InstancesHeader;
 import moa.core.Example;
@@ -32,14 +33,24 @@ public class SemiSupervisedStream extends AbstractOptionHandler implements Insta
             "The ratio of unlabeled data",
             0.5);
 
+    public IntOption initialWindowSizeOption = new IntOption("initialTrainingWindow", 'p',
+            "Number of instances used for training in the beginning of the stream.",
+            1000, 0, Integer.MAX_VALUE);
+
+    public IntOption instanceRandomSeedOption = new IntOption(
+            "instanceRandomSeed", 'i',
+            "Seed for random generation of instances.", 1);
+
     /** Random generator to obtain the probability of removing label from an instance.
      * It is not seeded otherwise the probability will always be the same number */
-    private Random random = new Random();
+    private Random random;
 
     /** Probability that an instance will have a label */
     private double threshold;
 
     private static final long serialVersionUID = 1L;
+
+    private long instancesProcessed = 0;
 
     @Override
     public String getPurposeString() {
@@ -52,6 +63,7 @@ public class SemiSupervisedStream extends AbstractOptionHandler implements Insta
         // sets up the threshold
         this.threshold = this.thresholdOption.getValue();
 
+        this.instancesProcessed = 0;
         // sets up the stream generator
         this.stream = (InstanceStream) getPreparedClassOption(this.streamOption);
         if (this.stream instanceof AbstractOptionHandler) {
@@ -79,13 +91,22 @@ public class SemiSupervisedStream extends AbstractOptionHandler implements Insta
 
     @Override
     public Example<Instance> nextInstance() {
+        if(this.random == null)
+            this.random = new Random(instanceRandomSeedOption.getValue());
+
+        ++instancesProcessed;
         Objects.requireNonNull(this.stream, "The stream must not be null");
 
         Example<Instance> inst = this.stream.nextInstance();
+
+        // "instancesProcessed > this.initialWindowSizeOption.getValue()"
+        // Check if this instance is not part of the first instances to guarantee labeled data.
+        // This is to ensure trainOnInitialWindow works properly.
+
         // if the probability is below the threshold, mask the label
         // i.e. the higher the probability, the more likely this instance is unlabeled (and vice-versa)
         // ==> it corresponds to the ratio of unlabeled data
-        if (this.random.nextDouble() <= this.threshold) {
+        if (instancesProcessed > this.initialWindowSizeOption.getValue() && this.random.nextDouble() <= this.threshold) {
             InstanceExample instEx = new InstanceExample(inst.getData().copy());
             // instEx.instance.setMissing(instEx.instance.classIndex());
             instEx.instance.setMasked(instEx.instance.classIndex());
@@ -105,6 +126,7 @@ public class SemiSupervisedStream extends AbstractOptionHandler implements Insta
     public void restart() {
         Objects.requireNonNull(this.stream, "The stream must not be null");
         this.stream.restart();
+//        this.random = new Random(instanceRandomSeedOption.getValue());getValue
     }
 
     @Override

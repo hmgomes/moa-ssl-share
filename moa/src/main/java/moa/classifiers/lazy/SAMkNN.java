@@ -474,7 +474,7 @@ public class SAMkNN extends AbstractClassifier implements MultiClassClassifier {
 	}
 
     /**
-     * Removes predictions of the largest window size and shifts the remaining ones accordingly.
+     * Removes predictions of the largest labeledInstancesBuffer size and shifts the remaining ones accordingly.
      */
 	private void adaptHistories(int numberOfDeletions){
 		for (int i = 0; i < numberOfDeletions; i++){
@@ -508,7 +508,7 @@ public class SAMkNN extends AbstractClassifier implements MultiClassClassifier {
 		return predictionHistory;
 	}
     /**
-     * Returns the window size with the minimum Interleaved test-train error, using bisection (with recalculation of the STM error).
+     * Returns the labeledInstancesBuffer size with the minimum Interleaved test-train error, using bisection (with recalculation of the STM error).
      */
 	private int getMinErrorRateWindowSize() {
 
@@ -560,7 +560,7 @@ public class SAMkNN extends AbstractClassifier implements MultiClassClassifier {
 	}
 
     /**
-     * Returns the window size with the minimum Interleaved test-train error, using bisection (without recalculation using an incremental approximation).
+     * Returns the labeledInstancesBuffer size with the minimum Interleaved test-train error, using bisection (without recalculation using an incremental approximation).
      */
 	private int getMinErrorRateWindowSizeIncremental() {
 		int numSamples = this.stm.numInstances();

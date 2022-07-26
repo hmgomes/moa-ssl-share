@@ -37,7 +37,7 @@ import java.util.LinkedList;
 
 /**
  * Classification evaluator that updates evaluation results using a sliding
- * window.
+ * labeledInstancesBuffer.
  *
  * @author Albert Bifet (abifet at cs dot waikato dot ac dot nz)
  * @author Jean Paul Barddal (jpbarddal@gmail.com)
@@ -82,10 +82,15 @@ public class WindowClassificationPerformanceEvaluator extends BasicClassificatio
             double forget = window[posWindow];
             if(!Double.isNaN(forget)){
                 sum -= forget;
-            }else qtyNaNs--;
+            }
+            else
+                qtyNaNs--;
             if(!Double.isNaN(value)) {
                 sum += value;
-            }else qtyNaNs++;
+            }
+            else
+                qtyNaNs++;
+
             window[posWindow] = value;
             posWindow++;
             if (posWindow == SizeWindow) {

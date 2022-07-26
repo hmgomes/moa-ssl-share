@@ -36,7 +36,7 @@ public class ClusterGenerator extends AbstractClusterer{
 	private static final long serialVersionUID = 1L;
 
 	public IntOption timeWindowOption = new IntOption("timeWindow",
-			't', "Rang of the window.", 1000);
+			't', "Rang of the labeledInstancesBuffer.", 1000);
 
     public FloatOption radiusDecreaseOption = new FloatOption("radiusDecrease", 'r',
                 "The average radii of the centroids in the model.", 0, 0, 1);

@@ -22,6 +22,7 @@ import com.yahoo.labs.samoa.instances.Instance;
 
 import moa.classifiers.AbstractClassifier;
 import moa.classifiers.MultiClassClassifier;
+import moa.classifiers.semisupervised.SLEADBaseEnsemble;
 import moa.core.DoubleVector;
 import moa.core.InstanceExample;
 import moa.core.Measurement;
@@ -34,6 +35,7 @@ import com.github.javacliparser.IntOption;
 import com.github.javacliparser.MultiChoiceOption;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Random;
 import java.util.concurrent.Callable;
 
 import moa.classifiers.trees.ARFHoeffdingTree;
@@ -80,7 +82,7 @@ import moa.classifiers.core.driftdetection.ChangeDetector;
  * @author Heitor Murilo Gomes (heitor_murilo_gomes at yahoo dot com dot br)
  * @version $Revision: 1 $
  */
-public class AdaptiveRandomForest extends AbstractClassifier implements MultiClassClassifier {
+public class AdaptiveRandomForest extends AbstractClassifier implements MultiClassClassifier, SLEADBaseEnsemble {
 
     @Override
     public String getPurposeString() {
@@ -179,7 +181,7 @@ public class AdaptiveRandomForest extends AbstractClassifier implements MultiCla
                     trainers.add(trainer);
                 }
                 else { // SINGLE_THREAD is in-place... 
-                    this.ensemble[i].trainOnInstance(instance, k, this.instancesSeen);
+                    this.ensemble[i].trainOnInstance(instance, k, this.instancesSeen, this.classifierRandom, true);
                 }
             }
         }
@@ -229,7 +231,7 @@ public class AdaptiveRandomForest extends AbstractClassifier implements MultiCla
         return null;
     }
 
-    protected void initEnsemble(Instance instance) {
+    public void initEnsemble(Instance instance) {
         // Init the ensemble.
         int ensembleSize = this.ensembleSizeOption.getValue();
         this.ensemble = new ARFBaseLearner[ensembleSize];
@@ -292,12 +294,16 @@ public class AdaptiveRandomForest extends AbstractClassifier implements MultiCla
                 false);
         }
     }
-    
+
+    public ARFBaseLearner[] getEnsembleMembers() {
+        return this.ensemble;
+    }
+
     /**
      * Inner class that represents a single tree member of the forest. 
      * It contains some analysis information, such as the numberOfDriftsDetected, 
      */
-    protected final class ARFBaseLearner extends AbstractMOAObject {
+    public final class ARFBaseLearner extends AbstractMOAObject {
         public int indexOriginal;
         public long createdOn;
         public long lastDriftOn;
@@ -320,8 +326,8 @@ public class AdaptiveRandomForest extends AbstractClassifier implements MultiCla
         protected ARFBaseLearner bkgLearner;
         // Statistics
         public BasicClassificationPerformanceEvaluator evaluator;
-        protected int numberOfDriftsDetected;
-        protected int numberOfWarningsDetected;
+        public int numberOfDriftsDetected;
+        public int numberOfWarningsDetected;
 
         private void init(int indexOriginal, ARFHoeffdingTree instantiatedClassifier, BasicClassificationPerformanceEvaluator evaluatorInstantiated, 
             long instancesSeen, boolean useBkgLearner, boolean useDriftDetector, ClassOption driftOption, ClassOption warningOption, boolean isBackgroundLearner) {
@@ -375,7 +381,7 @@ public class AdaptiveRandomForest extends AbstractClassifier implements MultiCla
             this.evaluator.reset();
         }
 
-        public void trainOnInstance(Instance instance, double weight, long instancesSeen) {
+        public void trainOnInstance(Instance instance, double weight, long instancesSeen, Random random, boolean changeDetectionUpdateAllowed) {
             Instance weightedInstance = (Instance) instance.copy();
             weightedInstance.setWeight(instance.weight() * weight);
             this.classifier.trainOnInstance(weightedInstance);
@@ -384,7 +390,7 @@ public class AdaptiveRandomForest extends AbstractClassifier implements MultiCla
                 this.bkgLearner.classifier.trainOnInstance(instance);
             
             // Should it use a drift detector? Also, is it a backgroundLearner? If so, then do not "incept" another one. 
-            if(this.useDriftDetector && !this.isBackgroundLearner) {
+            if(this.useDriftDetector && !this.isBackgroundLearner && changeDetectionUpdateAllowed) {
                 boolean correctlyClassifies = this.classifier.correctlyClassifies(instance);
                 // Check for warning only if useBkgLearner is active
                 if(this.useBkgLearner) {
@@ -418,6 +424,7 @@ public class AdaptiveRandomForest extends AbstractClassifier implements MultiCla
                 this.driftDetectionMethod.input(correctlyClassifies ? 0 : 1);
                 // Check if there was a change
                 if(this.driftDetectionMethod.getChange()) {
+//                    System.out.println("???, " + instancesSeen + ", ???, [Tree" + this.indexOriginal + "] DRIFT DETECTED");
                     this.lastDriftOn = instancesSeen;
                     this.numberOfDriftsDetected++;
                     this.reset();
@@ -454,7 +461,7 @@ public class AdaptiveRandomForest extends AbstractClassifier implements MultiCla
 
         @Override
         public void run() {
-            learner.trainOnInstance(this.instance, this.weight, this.instancesSeen);
+            learner.trainOnInstance(this.instance, this.weight, this.instancesSeen, null, true);
         }
 
         @Override

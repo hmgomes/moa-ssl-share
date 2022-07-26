@@ -125,7 +125,7 @@ public class AbstractC extends AbstractCBase {
         ISBNode nodeNew = new ISBNode(inst, obj, objId);
         if (bTrace) { Print("New node: "); PrintNode(nodeNew); }
         
-        objId++; // update object identifier (slide window)
+        objId++; // update object identifier (slide labeledInstancesBuffer)
         
         // purge expired node
         ISBNode nodeExpired = GetExpiredNode();
@@ -140,7 +140,7 @@ public class AbstractC extends AbstractCBase {
         for (int i = 0; i < m_WindowSize; i++) {
             nodeNew.lt_cnt.add(1);
         }        
-        AddNode(nodeNew); // add nodeNew to window and index
+        AddNode(nodeNew); // add nodeNew to labeledInstancesBuffer and index
         if (bTrace) PrintWindow();
         
         // perform range query search

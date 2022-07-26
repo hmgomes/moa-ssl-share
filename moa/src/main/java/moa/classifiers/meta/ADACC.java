@@ -54,10 +54,10 @@ public class ADACC extends DACC implements MultiClassClassifier {
         return "Anticipative and Dynamic Adaptation to Concept Changes for data streams.";
     }
     /**
-     * Evaluation window for the stability index computation  
+     * Evaluation labeledInstancesBuffer for the stability index computation
      */
     public IntOption tauSizeOption = new IntOption("tau", 't',
-            "The size of the evaluation window for the meta-learning.", 100, 1, 10000);
+            "The size of the evaluation labeledInstancesBuffer for the meta-learning.", 100, 1, 10000);
     /**
      * Threshold for the stability index
      */
@@ -69,7 +69,7 @@ public class ADACC extends DACC implements MultiClassClassifier {
     public FloatOption equivIndexSizeOption = new FloatOption("CeThr", 'q',
             "The threshold for concept equivalence", 0.7, 0, 1);
     /**
-     * Size of the evaluation window to compute the stability index  
+     * Size of the evaluation labeledInstancesBuffer to compute the stability index
      */
     protected int tau_size = 0; 
     /**

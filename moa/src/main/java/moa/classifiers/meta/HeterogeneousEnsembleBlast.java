@@ -29,7 +29,7 @@ import moa.classifiers.MultiClassClassifier;
  * <p>
  * Given a set of (heterogeneous) classifiers, BLAST builds an ensemble, and
  * determines the weights of all ensemble members based on their performance on
- * recent observed instances. This implementation uses a window of recent 
+ * recent observed instances. This implementation uses a labeledInstancesBuffer of recent
  * instances, the size is determined by the 'w' parameter. 
  * </p>
  *
@@ -59,7 +59,7 @@ public class HeterogeneousEnsembleBlast extends HeterogeneousEnsembleAbstract im
 	protected boolean[][] onlineHistory;
 
 	public IntOption windowSizeOption = new IntOption("windowSize", 'w',
-			"The window size over which Online Performance Estimation is done.", 1000,
+			"The labeledInstancesBuffer size over which Online Performance Estimation is done.", 1000,
 			1, Integer.MAX_VALUE);
 
 	@Override

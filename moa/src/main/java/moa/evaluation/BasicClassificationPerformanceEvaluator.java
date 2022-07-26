@@ -76,7 +76,7 @@ public class BasicClassificationPerformanceEvaluator extends AbstractOptionHandl
     public FlagOption precisionRecallOutputOption = new FlagOption("precisionRecallOutput",
             'o',
             "Outputs average precision, recall and F1 scores.");
-    
+
     public FlagOption precisionPerClassOption = new FlagOption("precisionPerClass",
             'p',
             "Report precision per class.");

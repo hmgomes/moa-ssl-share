@@ -286,7 +286,7 @@ public class ApproxSTORM extends STORMBase {
         // insert node to ISB
         ISB.Insert(nodeNew);
         
-        // insert node at window
+        // insert node at labeledInstancesBuffer
         windowNodes.add(nodeNew);
 
         if (bTrace) {
@@ -306,7 +306,7 @@ public class ApproxSTORM extends STORMBase {
     void SearchOutliers() {
         if (bTrace) Println("Invoke query: ");
         ISBNodeAppr node;
-        // process each node in the ISB (also in window)
+        // process each node in the ISB (also in labeledInstancesBuffer)
         for (int i = 0; i < windowNodes.size(); i++) {
             node = (ISBNodeAppr) windowNodes.get(i);
             if (bTrace) {

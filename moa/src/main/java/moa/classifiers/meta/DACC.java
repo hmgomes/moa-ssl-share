@@ -71,10 +71,10 @@ public class DACC extends AbstractClassifier implements MultiClassClassifier {
     public FloatOption maturityOption = new FloatOption("maturity", 'a',
             "The maturity age.", 20, 0, 100);
     /**
-     * Size of the evaluation window for weights computing
+     * Size of the evaluation labeledInstancesBuffer for weights computing
      */
     public FloatOption evaluationSizeOption = new FloatOption("evalSize", 'e',
-            "The size of the evaluation window.", 20, 1, 1000);
+            "The size of the evaluation labeledInstancesBuffer.", 20, 1, 1000);
     /**
      * Combination functions: MAX and WVD (MAX leads to a faster reactivity to the change, WVD is more robust to noise) 
      */
@@ -236,7 +236,7 @@ public class DACC extends AbstractClassifier implements MultiClassClassifier {
     }
     
     /**
-     * Updates the evaluation window of a classifier and returns the
+     * Updates the evaluation labeledInstancesBuffer of a classifier and returns the
      * updated weight value.
      * @param index the index of the classifier in the ensemble
      * @param val the last evaluation record of the classifier 
