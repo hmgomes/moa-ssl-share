@@ -42,7 +42,7 @@ public class EvaluateInterleavedTestThenTrainSSLDelayed extends SemiSupervisedMa
     public FlagOption onlyLabeledDataOption = new FlagOption("labeledDataOnly", 'a',
             "Learner only trained on labeled data");
 
-    public ClassOption standarLearnerOption = new ClassOption("standardLearner", 'b',
+    public ClassOption standardLearnerOption = new ClassOption("standardLearner", 'b',
             "A standard learner to train. This will be ignored if labeledDataOnly flag is not set.",
             MultiClassClassifier.class, "moa.classifiers.trees.HoeffdingTree");
 
@@ -78,7 +78,7 @@ public class EvaluateInterleavedTestThenTrainSSLDelayed extends SemiSupervisedMa
 //            "Whether to train or not using instances in the initial labeledInstancesBuffer.");
 
     public FlagOption debugPseudoLabelsOption = new FlagOption("debugPseudoLabels", 'w',
-            "Learner only trained on labeled data");
+            "Learner also receives the labeled data, but it is not used for training (just for statistics)");
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -128,8 +128,8 @@ public class EvaluateInterleavedTestThenTrainSSLDelayed extends SemiSupervisedMa
         Learner learner;
         String learnerString;
         if(this.onlyLabeledDataOption.isSet()) {
-            learner = (Learner) getPreparedClassOption(this.standarLearnerOption);
-            learnerString = this.standarLearnerOption.getValueAsCLIString();
+            learner = (Learner) getPreparedClassOption(this.standardLearnerOption);
+            learnerString = this.standardLearnerOption.getValueAsCLIString();
         } else {
             learner = (SemiSupervisedLearner) getPreparedClassOption(this.sslLearnerOption);
             learnerString = this.sslLearnerOption.getValueAsCLIString();

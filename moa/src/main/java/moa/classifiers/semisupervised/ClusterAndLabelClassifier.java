@@ -109,7 +109,6 @@ public class ClusterAndLabelClassifier extends AbstractClassifier
 
     @Override
     public void resetLearningImpl() {
-
         this.clusterer.resetLearning();
         this.instancesSeen = 0;
         this.instancesCorrectPseudoLabeled = 0;
@@ -120,8 +119,11 @@ public class ClusterAndLabelClassifier extends AbstractClassifier
     public void trainOnInstanceImpl(Instance instance) {
         ++this.instancesSeen;
         Objects.requireNonNull(this.clusterer, "Clusterer must not be null!");
-        if (this.usePseudoLabel) this.trainOnInstanceWithPseudoLabel(instance);
-        else this.trainOnInstanceNoPseudoLabel(instance);
+        this.clusterer.trainOnInstance(instance); // else, just train it normally
+//        if (this.usePseudoLabel)
+//            this.trainOnInstanceWithPseudoLabel(instance);
+//        else
+//            this.trainOnInstanceNoPseudoLabel(instance);
     }
 
     @Override
@@ -132,28 +134,11 @@ public class ClusterAndLabelClassifier extends AbstractClassifier
     // TODO: Verify if we need to do something else.
     @Override
     public int trainOnUnlabeledInstance(Instance instance) {
-        this.trainOnInstanceImpl(instance);
-        return -1;
-    }
-
-
-    /**
-     * Trains Cluster-and-Label normally (use the instance to train the clusterer)
-     * @param inst the instance X
-     */
-    private void trainOnInstanceNoPseudoLabel(Instance inst) {
-        // train stuffs
-        this.clusterer.trainOnInstance(inst);
-    }
-
-    /**
-     * Trains Cluster-and-Label with pseudo-label
-     * @param inst the instance X
-     */
-    private void trainOnInstanceWithPseudoLabel(Instance inst) {
-        // if the class is masked (simulated as missing) or is missing (for real) --> pseudo-label
-        if (inst.classIsMasked() || inst.classIsMissing()) {
-            Instance instPseudoLabel = inst.copy();
+//        instance.setMissing(instance.classIndex());
+        if (this.usePseudoLabel) {
+            // if the class is masked (simulated as missing) or is missing (for real) --> pseudo-label
+//            if (instance.classIsMasked() || instance.classIsMissing()) {
+            Instance instPseudoLabel = instance.copy();
             double pseudoLabel;
             if (k == 1) {
                 Cluster C = this.findClosestCluster(instPseudoLabel, false);
@@ -165,14 +150,35 @@ public class ClusterAndLabelClassifier extends AbstractClassifier
             instPseudoLabel.setClassValue(pseudoLabel);
             this.clusterer.trainOnInstance(instPseudoLabel);
 
-            if(pseudoLabel == inst.maskedClassValue()) {
+            if (pseudoLabel == instance.classValue()) {
                 ++this.instancesCorrectPseudoLabeled;
             }
             ++this.instancesPseudoLabeled;
-        } else {
-            this.clusterer.trainOnInstance(inst); // else, just train it normally
+//            }
         }
+//        else {
+//            IF NOT USING PSEUDO-LABELS, THEN JUST IGNORE THE UNLABELED INSTANCE.
+//        }
+        return -1;
     }
+
+
+    /**
+     * Trains Cluster-and-Label normally (use the instance to train the clusterer)
+     * @param inst the instance X
+     */
+//    private void trainOnInstanceNoPseudoLabel(Instance inst) {
+//        // train stuffs
+//        this.clusterer.trainOnInstance(inst);
+//    }
+
+    /**
+     * Trains Cluster-and-Label with pseudo-label
+     * @param inst the instance X
+     */
+//    private void trainOnInstanceWithPseudoLabel(Instance inst) {
+//
+//    }
 
     /** Allows the us to quickly find the k closest cluster */
     class DistanceKernelComparator implements Comparator<Cluster> {
@@ -222,9 +228,9 @@ public class ClusterAndLabelClassifier extends AbstractClassifier
     protected Measurement[] getModelMeasurementsImpl() {
         // instances seen * the number of ensemble members
         return new Measurement[]{
-                new Measurement("#pseudo-labeled", -1), // this.instancesPseudoLabeled),
-                new Measurement("#correct pseudo-labeled", -1), //this.instancesCorrectPseudoLabeled),
-                new Measurement("accuracy pseudo-labeled", -1) //this.instancesCorrectPseudoLabeled / (double) this.instancesPseudoLabeled * 100)
+                new Measurement("#pseudo-labeled", this.instancesPseudoLabeled),
+                new Measurement("#correct pseudo-labeled", this.instancesCorrectPseudoLabeled),
+                new Measurement("accuracy pseudo-labeled", this.instancesCorrectPseudoLabeled / (double) this.instancesPseudoLabeled * 100)
         };
     }
 

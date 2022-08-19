@@ -27,8 +27,8 @@ import moa.classifiers.AbstractClassifier;
 import moa.classifiers.Classifier;
 import moa.classifiers.MultiClassClassifier;
 import moa.classifiers.core.driftdetection.ChangeDetector;
-import moa.classifiers.semisupervised.SLEADBaseClassifier;
-import moa.classifiers.semisupervised.SLEADBaseEnsemble;
+import moa.classifiers.semisupervised.SLEADEBaseClassifier;
+import moa.classifiers.semisupervised.SLEADEBaseEnsemble;
 import moa.core.*;
 import moa.evaluation.BasicClassificationPerformanceEvaluator;
 import moa.options.ClassOption;
@@ -69,7 +69,7 @@ import java.util.Random;
  * @author Heitor Murilo Gomes (heitor dot gomes at waikato dot ac dot nz)
  * @version $Revision: 1 $
  */
-public class StreamingRandomPatches extends AbstractClassifier implements MultiClassClassifier, SLEADBaseEnsemble /*,
+public class StreamingRandomPatches extends AbstractClassifier implements MultiClassClassifier, SLEADEBaseEnsemble /*,
         CapabilitiesHandler*/ {
 
     private static final long serialVersionUID = 1L;
@@ -161,14 +161,13 @@ public class StreamingRandomPatches extends AbstractClassifier implements MultiC
             this.ensemble[i].evaluator.addResult(example, vote.getArrayRef());
             // Train using random subspaces without resampling, i.e. all instances are used for training.
             if(this.trainingMethodOption.getChosenIndex() == TRAIN_RANDOM_SUBSPACES) {
-                this.ensemble[i].trainOnInstance(instance,1, this.instancesSeen, this.classifierRandom, true);
+                this.ensemble[i].trainOnInstance(instance,1, this.instancesSeen, this.classifierRandom, false);
             }
-            // Train using random patches or resampling, thus we simulate online bagging with poisson(lambda=...)
             else {
                 int k = MiscUtils.poisson(this.lambdaOption.getValue(), this.classifierRandom);
                 if (k > 0) {
                     double weight = k;
-                    this.ensemble[i].trainOnInstance(instance, weight, this.instancesSeen, this.classifierRandom, true);
+                    this.ensemble[i].trainOnInstance(instance, weight, this.instancesSeen, this.classifierRandom, false);
                 }
             }
         }
@@ -361,14 +360,6 @@ public class StreamingRandomPatches extends AbstractClassifier implements MultiC
         /*** TO DEBUG DELAYED DETECTIONS ***/
     }
 
-//    @Override
-//    public ImmutableCapabilities defineImmutableCapabilities() {
-//        if (this.getClass() == StreamingRandomPatches.class)
-//            return new ImmutableCapabilities(Capability.VIEW_STANDARD, Capability.VIEW_LITE);
-//        else
-//            return new ImmutableCapabilities(Capability.VIEW_STANDARD);
-//    }
-
     private static ArrayList<ArrayList<Integer>> localRandomKCombinations(int k, int length,
                                                                           int nCombinations, Random random) {
         ArrayList<ArrayList<Integer>> combinations = new ArrayList<>();
@@ -408,7 +399,7 @@ public class StreamingRandomPatches extends AbstractClassifier implements MultiC
     }
 
     // Inner class representing the base learner of SRP.
-    public class StreamingRandomPatchesClassifier implements SLEADBaseClassifier {
+    public class StreamingRandomPatchesClassifier implements SLEADEBaseClassifier {
         public int indexOriginal;
         public long createdOn;
         public Classifier classifier;
@@ -579,8 +570,17 @@ public class StreamingRandomPatches extends AbstractClassifier implements MultiC
             }
         }
 
+        /***
+         *
+         * @param instance
+         * @param weight
+         * @param instancesSeen
+         * @param random
+         * @param pseudoLabeledInstance flag to indicate whether this instance was pseudo-labeled.
+         */
         @Override
-        public void trainOnInstance(Instance instance, double weight, long instancesSeen, Random random, boolean changeDetectionUpdateAllowed) {
+        public void trainOnInstance(Instance instance, double weight, long instancesSeen,
+                                    Random random, boolean pseudoLabeledInstance) {
             boolean correctlyClassifies;
             // The subset object will be null if we are training with all features
             if(this.subset != null) {
@@ -591,7 +591,7 @@ public class StreamingRandomPatches extends AbstractClassifier implements MultiC
                 this.classifier.trainOnInstance(this.subset.get(0));
                 correctlyClassifies = this.classifier.correctlyClassifies(this.subset.get(0));
                 if(this.bkgLearner != null)
-                    this.bkgLearner.trainOnInstance(instance, weight, instancesSeen, random, changeDetectionUpdateAllowed);
+                    this.bkgLearner.trainOnInstance(instance, weight, instancesSeen, random, pseudoLabeledInstance);
             }
             else {
                 Instance weightedInstance = instance.copy();
@@ -599,10 +599,11 @@ public class StreamingRandomPatches extends AbstractClassifier implements MultiC
                 this.classifier.trainOnInstance(weightedInstance);
                 correctlyClassifies = this.classifier.correctlyClassifies(instance);
                 if(this.bkgLearner != null)
-                    this.bkgLearner.trainOnInstance(instance, weight, instancesSeen, random, changeDetectionUpdateAllowed);
+                    this.bkgLearner.trainOnInstance(instance, weight, instancesSeen, random, pseudoLabeledInstance);
             }
 
-            if(!this.disableDriftDetector && !this.isBackgroundLearner && changeDetectionUpdateAllowed) {
+            // Doesn't allow updates to the detector if the instance was pseudoLabeled.
+            if(!this.disableDriftDetector && !this.isBackgroundLearner && !pseudoLabeledInstance) {
 
                 // Check for warning only if useBkgLearner is active
                 if (!this.disableBkgLearner) {
@@ -623,6 +624,9 @@ public class StreamingRandomPatches extends AbstractClassifier implements MultiC
                     if(this.outputDebugStream != null)
                         this.outputDebugStream.println("???, " + instancesSeen + ", ???, learner" + this.indexOriginal + "");
 //                    System.out.println("???, " + instancesSeen + ", ???, [Tree" + this.indexOriginal + "] DRIFT DETECTED");
+//                    else
+//                        System.out.println("SRP_supervised_detection, " + instancesSeen + ", learner" + this.indexOriginal + "");
+
                     this.numberOfDriftsDetected++;
                     // There was a change, this model must be reset
                     this.reset(instance, instancesSeen, random);

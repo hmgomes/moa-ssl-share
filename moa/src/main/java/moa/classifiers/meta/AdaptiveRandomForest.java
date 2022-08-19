@@ -22,7 +22,6 @@ import com.yahoo.labs.samoa.instances.Instance;
 
 import moa.classifiers.AbstractClassifier;
 import moa.classifiers.MultiClassClassifier;
-import moa.classifiers.semisupervised.SLEADBaseEnsemble;
 import moa.core.DoubleVector;
 import moa.core.InstanceExample;
 import moa.core.Measurement;
@@ -82,7 +81,7 @@ import moa.classifiers.core.driftdetection.ChangeDetector;
  * @author Heitor Murilo Gomes (heitor_murilo_gomes at yahoo dot com dot br)
  * @version $Revision: 1 $
  */
-public class AdaptiveRandomForest extends AbstractClassifier implements MultiClassClassifier, SLEADBaseEnsemble {
+public class AdaptiveRandomForest extends AbstractClassifier implements MultiClassClassifier {
 
     @Override
     public String getPurposeString() {
@@ -424,6 +423,7 @@ public class AdaptiveRandomForest extends AbstractClassifier implements MultiCla
                 this.driftDetectionMethod.input(correctlyClassifies ? 0 : 1);
                 // Check if there was a change
                 if(this.driftDetectionMethod.getChange()) {
+                    System.out.println("ARF_supervised_detection, " + instancesSeen + ", learner" + this.indexOriginal + "");
 //                    System.out.println("???, " + instancesSeen + ", ???, [Tree" + this.indexOriginal + "] DRIFT DETECTED");
                     this.lastDriftOn = instancesSeen;
                     this.numberOfDriftsDetected++;
