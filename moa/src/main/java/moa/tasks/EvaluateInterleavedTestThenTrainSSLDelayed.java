@@ -106,6 +106,10 @@ public class EvaluateInterleavedTestThenTrainSSLDelayed extends SemiSupervisedMa
     public FileOption outputPredictionFileOption = new FileOption("outputPredictionFile", 'o',
             "File to append output predictions to.", null, "pred", true);
 
+    public FileOption debugOutputUnlabeledClassInformation = new FileOption("debugOutputUnlabeledClassInformation", 'h',
+            "Single column containing the class label or -999 indicating missing labels.", null, "csv", true);
+
+
     private int numUnlabeledData = 0;
 
     private double labelProbability;
@@ -185,6 +189,29 @@ public class EvaluateInterleavedTestThenTrainSSLDelayed extends SemiSupervisedMa
                         "Unable to open prediction result file: " + outputPredictionFile, ex);
             }
         }
+
+        // File for output unlabeled class information
+        // File for debug confidence
+        File outputUnlabeledClassInformationDebugFile = this.debugOutputUnlabeledClassInformation.getFile();
+        PrintStream outputUnlabeledClassInformationDebugStream = null;
+        if (outputUnlabeledClassInformationDebugFile != null) {
+            try {
+                if (outputUnlabeledClassInformationDebugFile.exists()) {
+                    outputUnlabeledClassInformationDebugStream = new PrintStream(
+                            new FileOutputStream(outputUnlabeledClassInformationDebugFile, true), true);
+                } else {
+                    outputUnlabeledClassInformationDebugStream = new PrintStream(
+                            new FileOutputStream(outputUnlabeledClassInformationDebugFile), true);
+                }
+            } catch (Exception ex) {
+                throw new RuntimeException(
+                        "Unable to open confidence prediction debug file: " + outputUnlabeledClassInformationDebugFile, ex);
+            }
+        }
+        if(outputUnlabeledClassInformationDebugStream != null) {
+            outputUnlabeledClassInformationDebugStream.println("class");
+        }
+
         boolean firstDump = true;
         boolean preciseCPUTiming = TimingUtils.enablePreciseTiming();
         long evaluateStartTime = TimingUtils.getNanoCPUTimeOfCurrentThread();
@@ -234,6 +261,12 @@ public class EvaluateInterleavedTestThenTrainSSLDelayed extends SemiSupervisedMa
                 if(this.labelProbability > randomValue) {
                     this.numUnlabeledData++;
                     trainInstanceData.setMissing(trainInstanceData.classIndex());
+                    if(outputUnlabeledClassInformationDebugStream != null)
+                        outputUnlabeledClassInformationDebugStream.println(-999);
+                }
+                else {
+                    if(outputUnlabeledClassInformationDebugStream != null)
+                        outputUnlabeledClassInformationDebugStream.println((int) trainInstanceData.classValue());
                 }
                 // Store instance for delayed training. This instance is labeled.
                 this.trainInstances.addLast(trainExample);

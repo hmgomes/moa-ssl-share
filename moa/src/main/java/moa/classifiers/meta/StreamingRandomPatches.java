@@ -27,8 +27,6 @@ import moa.classifiers.AbstractClassifier;
 import moa.classifiers.Classifier;
 import moa.classifiers.MultiClassClassifier;
 import moa.classifiers.core.driftdetection.ChangeDetector;
-import moa.classifiers.semisupervised.SLEADEBaseClassifier;
-import moa.classifiers.semisupervised.SLEADEBaseEnsemble;
 import moa.core.*;
 import moa.evaluation.BasicClassificationPerformanceEvaluator;
 import moa.options.ClassOption;
@@ -69,7 +67,7 @@ import java.util.Random;
  * @author Heitor Murilo Gomes (heitor dot gomes at waikato dot ac dot nz)
  * @version $Revision: 1 $
  */
-public class StreamingRandomPatches extends AbstractClassifier implements MultiClassClassifier, SLEADEBaseEnsemble /*,
+public class StreamingRandomPatches extends AbstractClassifier implements MultiClassClassifier /*,
         CapabilitiesHandler*/ {
 
     private static final long serialVersionUID = 1L;
@@ -399,7 +397,7 @@ public class StreamingRandomPatches extends AbstractClassifier implements MultiC
     }
 
     // Inner class representing the base learner of SRP.
-    public class StreamingRandomPatchesClassifier implements SLEADEBaseClassifier {
+    public class StreamingRandomPatchesClassifier  {
         public int indexOriginal;
         public long createdOn;
         public Classifier classifier;
@@ -578,7 +576,6 @@ public class StreamingRandomPatches extends AbstractClassifier implements MultiC
          * @param random
          * @param pseudoLabeledInstance flag to indicate whether this instance was pseudo-labeled.
          */
-        @Override
         public void trainOnInstance(Instance instance, double weight, long instancesSeen,
                                     Random random, boolean pseudoLabeledInstance) {
             boolean correctlyClassifies;
