@@ -1,0 +1,89 @@
+"""
+Tests ensure consistency between python and java. These tests have a java
+counterpart moa/src/main/java/moa/streams/SemiSupervisedStream.java
+"""
+
+import typing as t
+
+import numpy as np
+import pytest
+from river import stream as rs
+from sklearn import datasets
+
+from sslstream import SemiSupervisedStream
+
+
+def test_RNG_consistency():
+    """Ensure the PRNG is seeded correctly, so that the stream
+    is deterministic and consistent with other languages.
+    """
+    expected = [0.37454, 0.95071, 0.73199, 0.59865, 0.15601,
+                0.15599, 0.05808, 0.86617, 0.60111, 0.70807]
+    mt19937 = np.random.MT19937()
+    mt19937._legacy_seeding(42)
+    rand = np.random.Generator(mt19937)
+    for i in range(10):
+        # Assert equals with delta
+        assert rand.random(dtype=np.float64) == pytest.approx(
+            expected[i], 0.0001)
+
+
+@pytest.mark.parametrize("warmup_length", [0, 100])
+def test_stream_consistency(warmup_length):
+    """ Ensure SemiSupervisedStream returns a consistent stream of
+    labeled vs unlabeled instances, when the PRNG is seeded. This
+    is to ensure that the stream is deterministic and consistent
+    with other languages.
+    """
+
+    expected = [True, False, False, False,
+                True, True, True, False, False, False]
+
+    stream = zip(range(10 + warmup_length), range(10 + warmup_length))
+    sss = SemiSupervisedStream(0.5, 42, warmup_length, stream)
+
+    for i, (x, y) in enumerate(sss):
+        if i < warmup_length:
+            assert y == i, "Instances during warmup should always have a label"
+            continue
+
+        # Assert equals with delta
+        assert (y != None) == expected[i-warmup_length]
+
+
+def test_probability():
+    """Ensure the frequency of labeled vs unlabeled instances
+    is approximately correct.
+    """
+    stream = zip(range(10000), range(10000))
+    sss = SemiSupervisedStream(0.8, 42, 0, stream)
+
+    num_labeled = 0
+    num_unlabeled = 0
+    for i, (x, y) in enumerate(sss):
+        has_label = y != None
+        if has_label:
+            num_labeled += 1
+        else:
+            num_unlabeled += 1
+
+    assert num_labeled == 8038
+    assert num_unlabeled == 1962
+
+
+def test_river_compatibility():
+    """Ensure SemiSupervisedStream is compatible with River.
+    """
+    stream = rs.iter_sklearn_dataset(datasets.load_breast_cancer())
+    sss = SemiSupervisedStream(0.8, 42, 0, stream)
+
+    unlabeled = 0
+    labeled = 0
+    for xi, yi in sss:
+        if yi is None:
+            unlabeled += 1
+        else:
+            labeled += 1
+
+    assert labeled == 442
+    assert unlabeled == 127
