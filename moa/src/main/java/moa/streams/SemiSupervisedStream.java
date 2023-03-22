@@ -12,7 +12,8 @@ import moa.options.ClassOption;
 import moa.tasks.TaskMonitor;
 
 import java.util.Objects;
-import java.util.Random;
+import org.apache.commons.math3.random.MersenneTwister;
+import org.apache.commons.math3.random.RandomGenerator;
 
 /**
  * This stream generator is a wrapper that takes any stream generator and
@@ -41,9 +42,12 @@ public class SemiSupervisedStream extends AbstractOptionHandler implements Insta
             "instanceRandomSeed", 'i',
             "Seed for random generation of instances.", 1);
 
-    /** Random generator to obtain the probability of removing label from an instance.
-     * It is not seeded otherwise the probability will always be the same number */
-    private Random random;
+    /**
+     * Random generator to obtain the probability of removing label from an
+     * instance.
+     * It is not seeded otherwise the probability will always be the same number
+     */
+    private RandomGenerator random;
 
     /** Probability that an instance will have a label */
     private double threshold;
@@ -69,6 +73,10 @@ public class SemiSupervisedStream extends AbstractOptionHandler implements Insta
         if (this.stream instanceof AbstractOptionHandler) {
             ((AbstractOptionHandler) this.stream).prepareForUse(monitor, repository);
         }
+
+        // Setup the random generator to use MT19937. This ensures consistency
+        // across different platforms.
+        this.random = new MersenneTwister(this.instanceRandomSeedOption.getValue());
     }
 
     @Override
@@ -91,22 +99,22 @@ public class SemiSupervisedStream extends AbstractOptionHandler implements Insta
 
     @Override
     public Example<Instance> nextInstance() {
-        if(this.random == null)
-            this.random = new Random(instanceRandomSeedOption.getValue());
-
-        ++instancesProcessed;
         Objects.requireNonNull(this.stream, "The stream must not be null");
+        ++instancesProcessed;
 
         Example<Instance> inst = this.stream.nextInstance();
 
         // "instancesProcessed > this.initialWindowSizeOption.getValue()"
-        // Check if this instance is not part of the first instances to guarantee labeled data.
+        // Check if this instance is not part of the first instances to guarantee
+        // labeled data.
         // This is to ensure trainOnInitialWindow works properly.
 
         // if the probability is below the threshold, mask the label
-        // i.e. the higher the probability, the more likely this instance is unlabeled (and vice-versa)
+        // i.e. the higher the probability, the more likely this instance is unlabeled
+        // (and vice-versa)
         // ==> it corresponds to the ratio of unlabeled data
-        if (instancesProcessed > this.initialWindowSizeOption.getValue() && this.random.nextDouble() <= this.threshold) {
+        if (instancesProcessed > this.initialWindowSizeOption.getValue()
+                && this.random.nextDouble() >= this.threshold) {
             InstanceExample instEx = new InstanceExample(inst.getData().copy());
             // instEx.instance.setMissing(instEx.instance.classIndex());
             instEx.instance.setMasked(instEx.instance.classIndex());
@@ -126,7 +134,6 @@ public class SemiSupervisedStream extends AbstractOptionHandler implements Insta
     public void restart() {
         Objects.requireNonNull(this.stream, "The stream must not be null");
         this.stream.restart();
-//        this.random = new Random(instanceRandomSeedOption.getValue());getValue
     }
 
     @Override
