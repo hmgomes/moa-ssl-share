@@ -254,6 +254,8 @@ public class EvaluateInterleavedTestThenTrainSSLDelayed extends SemiSupervisedMa
                 Example trainExample = originalExample.copy();
                 Instance trainInstanceData = (Instance) trainExample.getData();
 
+                // Obtain the prediction for the testInst (i.e. no label)
+                double[] prediction = learner.getVotesForInstance(unlabeledExample);
 
                 // random = 0.01 and label probability = 0.05, do nothing.
                 // random = 0.08 and label probability = 0.05, remove the label.
@@ -263,22 +265,22 @@ public class EvaluateInterleavedTestThenTrainSSLDelayed extends SemiSupervisedMa
                     trainInstanceData.setMissing(trainInstanceData.classIndex());
                     if(outputUnlabeledClassInformationDebugStream != null)
                         outputUnlabeledClassInformationDebugStream.println(-999);
+
+                    // Train using the unlabeled instance.
+                    if(learner instanceof SemiSupervisedLearner)
+                        ((SemiSupervisedLearner) learner).trainOnUnlabeledInstance(unlabeledInstanceData);
                 }
                 else {
                     if(outputUnlabeledClassInformationDebugStream != null)
                         outputUnlabeledClassInformationDebugStream.println((int) trainInstanceData.classValue());
+
+                    // Store instance for delayed training. This instance is labeled.
+                    this.trainInstances.addLast(trainExample);
                 }
-                // Store instance for delayed training. This instance is labeled.
-                this.trainInstances.addLast(trainExample);
 
 
-                // Obtain the prediction for the testInst (i.e. no label)
-                double[] prediction = learner.getVotesForInstance(unlabeledExample);
 
 
-                // Train using the unlabeled instance.
-                if(learner instanceof SemiSupervisedLearner)
-                    ((SemiSupervisedLearner) learner).trainOnUnlabeledInstance(unlabeledInstanceData);
 
                 // Output prediction
                 if (outputPredictionFile != null) {
