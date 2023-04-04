@@ -161,7 +161,7 @@ public class SemiSupervisedTaskManagerPanel extends JPanel {
     public SemiSupervisedTaskManagerPanel() {
         // Read current task preference
         prefs = Preferences.userRoot().node(this.getClass().getName());
-        currentTask = new EvaluateInterleavedTestThenTrainSemi();
+        currentTask = new EvaluateInterleavedTestThenTrainSSLDelayed();
         String taskText = this.currentTask.getCLICreationString(SemiSupervisedMainTask.class);
         String propertyValue = prefs.get(PREF_NAME, taskText);
         //this.taskDescField.setText(propertyValue);

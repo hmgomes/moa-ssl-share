@@ -59,7 +59,7 @@ public class EvaluateInterleavedTestThenTrainSSLDelayed extends SemiSupervisedMa
 
     public ClassOption streamOption = new ClassOption("stream", 's',
             "Stream to learn from.", ExampleStream.class,
-            "SemiSupervisedStream");
+            "moa.streams.ArffFileStream");
 
     public ClassOption evaluatorOption = new ClassOption("evaluator", 'e',
             "Classification performance evaluation method.",
