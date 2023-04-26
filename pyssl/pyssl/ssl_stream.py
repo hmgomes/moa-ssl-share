@@ -1,11 +1,12 @@
 import typing as t
-
 import numpy as np
+from river.base.typing import Dataset, Stream, ClfTarget
 
 Instance = t.Tuple[dict, t.Any]
+SemiSupervisedLabel = t.Optional[ClfTarget]
 
 
-class SemiSupervisedStream(t.Iterable[Instance]):
+class SemiSupervisedStream(Stream):
     """A stream that returns only some instances with a label. The remaining
     instances are returned without a label.
 
@@ -18,7 +19,7 @@ class SemiSupervisedStream(t.Iterable[Instance]):
     """
 
     def __init__(self,
-                 stream: t.Iterable[Instance],
+                 stream: Stream,
                  label_p: float,
                  seed: int,
                  warmup: int = 0,
@@ -45,8 +46,9 @@ class SemiSupervisedStream(t.Iterable[Instance]):
         self.seed = int(seed)
         self.warmup_length = int(warmup)
         self.delay = int(delay) if delay != None else None
+        self.iter = self._generate_iterator()
 
-    def __iter__(self):
+    def _generate_iterator(self):
         # Each new stream resets the random number generator's state
         mt19937 = np.random.MT19937()
         mt19937._legacy_seeding(self.seed)
@@ -55,27 +57,35 @@ class SemiSupervisedStream(t.Iterable[Instance]):
         # If delay is defined, we need to buffer the instances. The buffer
         # is a list of tuples. The first element is the index when
         # it should be emitted. The second element is the instance itself.
-        self._delay_buffer: t.List[t.Tuple[int, Instance]] = []
+        _delay_buffer: t.List[t.Tuple[int, Instance]] = []
 
-        i = 0
+        self._i = 0
         for x, y in self.wrapped_stream:
             # If we have delayed instances, check if we should emit them
-            while len(self._delay_buffer) > 0 and self._delay_buffer[0][0] == i:
-                i += 1
-                yield self._delay_buffer.pop(0)[1]
+            while len(_delay_buffer) > 0 and _delay_buffer[0][0] == self._i:
+                self._i += 1
+                buf_x, buf_y = _delay_buffer.pop(0)[1]
+                yield buf_x, buf_y, buf_y 
 
             # If the warmup is not over, return the element
-            if i < self.warmup_length:
-                i += 1
-                yield x, y
+            if self._i < self.warmup_length:
+                self._i += 1
+                yield x, y, y
             # Otherwise, return the element with probability p
             elif rand.random(dtype=np.float64) >= self.label_p:
-                i += 1
-                yield x, None
+                self._i += 1
+                yield x, None, y
 
                 # Buffer the instance if delay is defined
                 if self.delay is not None:
-                    self._delay_buffer.append((i + self.delay, (x, y)))
+                    _delay_buffer.append((self._i + self.delay, (x, y)))
             else:
-                i += 1
-                yield x, y
+                self._i += 1
+                yield x, y, y
+
+    def __next__(self) -> t.Tuple[dict, SemiSupervisedLabel, ClfTarget]:
+        return next(self.iter)
+
+    @property
+    def is_warming_up(self) -> bool:
+        return self.warmup_length > self._i

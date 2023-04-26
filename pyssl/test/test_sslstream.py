@@ -10,8 +10,10 @@ import pytest
 from river import stream as rs
 from sklearn import datasets
 
-from sslstream import SemiSupervisedStream
+from pyssl.ssl_stream import SemiSupervisedStream
+from river.base.typing import Dataset
 
+from pyssl.skmf import convert_river_to_skmf
 
 def test_RNG_consistency():
     """Ensure the PRNG is seeded correctly, so that the stream
@@ -48,7 +50,7 @@ def test_ssl_stream(warmup_length, delay):
     stream = zip(range(10 + warmup_length), range(10 + warmup_length))
     sss = SemiSupervisedStream(stream, 0.5, 42, warmup_length, delay)
 
-    for i, (_, y) in enumerate(sss):
+    for i, (_, y, true_y) in enumerate(sss):
         if i < warmup_length:
             assert y == i, "Instances during warmup should always have a label"
             continue
@@ -72,8 +74,8 @@ def test_probability():
 
     num_labeled = 0
     num_unlabeled = 0
-    for i, (x, y) in enumerate(sss):
-        has_label = y != None
+    for i, (x, y, true_y) in enumerate(sss):
+        has_label = y is not None
         if has_label:
             num_labeled += 1
         else:
@@ -81,6 +83,13 @@ def test_probability():
 
     assert num_labeled == 8038
     assert num_unlabeled == 1962
+
+@pytest.fixture
+def ssl_real_stream():
+    stream = rs.iter_sklearn_dataset(datasets.load_breast_cancer())
+    sss = SemiSupervisedStream(stream, 0.8, 42, 0)
+    return sss
+
 
 
 def test_river_compatibility():
@@ -91,7 +100,7 @@ def test_river_compatibility():
 
     unlabeled = 0
     labeled = 0
-    for xi, yi in sss:
+    for xi, yi, true_y in sss:
         if yi is None:
             unlabeled += 1
         else:
@@ -99,3 +108,25 @@ def test_river_compatibility():
 
     assert labeled == 442
     assert unlabeled == 127
+
+def test_exhaustible():
+    """Ensure SemiSupervisedStream is exhaustible.
+    """
+    stream = rs.iter_sklearn_dataset(datasets.load_breast_cancer())
+    sss = SemiSupervisedStream(stream, 0.8, 42, 0)
+
+    for xi, yi, true_y in sss:
+        pass
+
+    with pytest.raises(StopIteration):
+        next(sss)
+    
+    for xi, yi, true_y in sss:
+        raise Exception("Should not be reached")
+
+
+def test_streaming_take(ssl_real_stream: Dataset):
+    for x, y, _ in ssl_real_stream:
+        x, y = convert_river_to_skmf(x, y)
+        assert x.shape == (1, 30)
+
