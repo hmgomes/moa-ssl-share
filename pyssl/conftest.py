@@ -1,6 +1,12 @@
 import os
 import urllib.request
 
+import pytest
+
+from pyssl.ssl_stream import SemiSupervisedStream
+from river.stream import iter_csv
+
+
 def setup_weather_dataset():
     # Load weather.csv from
     # https://raw.githubusercontent.com/scikit-multiflow/streaming-datasets/master/weather.csv
@@ -18,4 +24,17 @@ def setup_weather_dataset():
 
     return path
 
+
 WEATHER_CSV = setup_weather_dataset()
+
+
+@pytest.fixture
+def weather_stream():
+    stream = iter_csv(WEATHER_CSV, target="target", converters={"target": int})
+    return stream
+
+
+@pytest.fixture
+def weather_ssl_stream():
+    stream = iter_csv(WEATHER_CSV, target="target", converters={"target": int})
+    return SemiSupervisedStream(stream, 0.05, 42)

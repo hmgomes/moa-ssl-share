@@ -1,6 +1,6 @@
 import typing as t
 import numpy as np
-from river.base.typing import Dataset, Stream, ClfTarget
+from river.base.typing import Stream, ClfTarget
 
 Instance = t.Tuple[dict, t.Any]
 SemiSupervisedLabel = t.Optional[ClfTarget]
@@ -13,18 +13,19 @@ class SemiSupervisedStream(Stream):
     Consistency across implementations is guaranteed using the MT19937
     pseudorandom number generator. The seed is used to initialize the
     generator. Following the warmup period, the generator is then used to
-    generate a random number between 0 and 1 for each element in the stream. 
-    If the random number is less than the probability `p`, the element is 
+    generate a random number between 0 and 1 for each element in the stream.
+    If the random number is less than the probability `p`, the element is
     returned with a label. Otherwise, the element is returned without a label.
     """
 
-    def __init__(self,
-                 stream: Stream,
-                 label_p: float,
-                 seed: int,
-                 warmup: int = 0,
-                 delay: t.Optional[int] = None,
-            ):
+    def __init__(
+        self,
+        stream: Stream,
+        label_p: float,
+        seed: int,
+        warmup: int = 0,
+        delay: t.Optional[int] = None,
+    ):
         """A stream that returns instances with a label with probability p.
 
         :param stream: The underlying stream which is being wrapped.
@@ -33,7 +34,7 @@ class SemiSupervisedStream(Stream):
         :param seed: Seed for the random number generator.
         :param warmup: Number of instances to return with a label before
             switching to the semi-supervised setting.
-        :param delay: When defined, instead of unlabeled instances we have 
+        :param delay: When defined, instead of unlabeled instances we have
             instances with delayed labels. The `delay` specifies the number
             of instances that must be seen before the instance is repeated
             with a label.
@@ -45,8 +46,11 @@ class SemiSupervisedStream(Stream):
         self.label_p = float(label_p)
         self.seed = int(seed)
         self.warmup_length = int(warmup)
-        self.delay = int(delay) if delay != None else None
-        self.iter = self._generate_iterator()
+        self.delay = int(delay) if delay is not None else None
+        self.iterator = self._generate_iterator()
+
+    def __iter__(self) -> t.Iterator[t.Tuple[dict, SemiSupervisedLabel, ClfTarget]]:
+        return self.iterator
 
     def _generate_iterator(self):
         # Each new stream resets the random number generator's state
@@ -65,7 +69,7 @@ class SemiSupervisedStream(Stream):
             while len(_delay_buffer) > 0 and _delay_buffer[0][0] == self._i:
                 self._i += 1
                 buf_x, buf_y = _delay_buffer.pop(0)[1]
-                yield buf_x, buf_y, buf_y 
+                yield buf_x, buf_y, buf_y
 
             # If the warmup is not over, return the element
             if self._i < self.warmup_length:
@@ -84,7 +88,7 @@ class SemiSupervisedStream(Stream):
                 yield x, y, y
 
     def __next__(self) -> t.Tuple[dict, SemiSupervisedLabel, ClfTarget]:
-        return next(self.iter)
+        return next(self.iterator)
 
     @property
     def is_warming_up(self) -> bool:
