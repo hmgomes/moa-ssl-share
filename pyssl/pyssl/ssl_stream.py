@@ -90,6 +90,9 @@ class SemiSupervisedStream(Stream):
     def __next__(self) -> t.Tuple[dict, SemiSupervisedLabel, ClfTarget]:
         return next(self.iterator)
 
+    def __len__(self) -> int:
+        return len(self.wrapped_stream)
+
     @property
     def is_warming_up(self) -> bool:
         return self.warmup_length > self._i
